@@ -6,97 +6,138 @@ type Props = {
   onClose?: () => void;
 };
 
-// Большой оверлей с точками, прогрессом и подсказками.
+// Full-screen calibration overlay with proper step-by-step calibration
 export default function CalibrationOverlay({ open, onClose }: Props) {
-  const { state, startCalibration, stop } = useEyeTracking();
+  const { state, startCalibration, cancelCalibration } = useEyeTracking();
   const [started, setStarted] = useState(false);
-  const [progress, setProgress] = useState(0);
 
-  // Закрытие, когда калибровка закончилась
+  // Close when calibration is complete
   useEffect(() => {
     if (!open) return;
     if (started && !state.isCalibrating && state.isCalibrated) {
-      onClose?.();
+      setTimeout(() => onClose?.(), 1000); // Small delay to show completion
     }
   }, [open, started, state.isCalibrating, state.isCalibrated, onClose]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/65 backdrop-blur-sm flex items-center justify-center select-none">
-      <div className="w-[720px] max-w-[94vw] bg-white rounded-2xl p-6 shadow-xl">
-        <h2 className="text-2xl font-semibold mb-2">Eye-Tracking Calibration</h2>
-        <p className="text-sm text-neutral-600 mb-4">
-          Sit ~50–70cm from the screen. Keep your head steady. Follow the dot with your eyes
-          (не головой). Каждая точка длится ~1.2s.
-        </p>
-
-        {/* Progress */}
-        <div className="w-full h-2 bg-neutral-200 rounded mb-3 overflow-hidden">
-          <div
-            className="h-full bg-blue-500 transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
-        {/* Stage / target */}
-        <div className="relative h-[360px] rounded-lg border border-neutral-200 bg-neutral-50">
-          <div className="absolute inset-x-0 bottom-3 text-center text-xs text-neutral-600">
-            {state.isCalibrating ? "Calibrating…" : "Ready"}
+    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center select-none">
+      {!started ? (
+        // Initial setup screen
+        <div className="w-[600px] max-w-[94vw] bg-white rounded-2xl p-8 shadow-xl text-center">
+          <div className="text-6xl mb-4">👁️</div>
+          <h2 className="text-3xl font-bold mb-4">Eye Tracking Calibration</h2>
+          <div className="text-left mb-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📱</span>
+              <p className="text-lg">Sit 50-70cm from your screen</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎯</span>
+              <p className="text-lg">Look at each dot with your eyes (not your head)</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⏱️</span>
+              <p className="text-lg">Stay focused on each dot for ~2 seconds</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💡</span>
+              <p className="text-lg">Keep your head still during calibration</p>
+            </div>
           </div>
-        </div>
-
-        {/* Controls */}
-        {!started ? (
-          <div className="mt-5 flex items-center gap-3">
+          
+          <div className="flex items-center gap-4 justify-center">
             <button
-              className="px-5 h-11 rounded-xl bg-neutral-900 text-white font-semibold"
+              className="px-8 py-4 rounded-xl bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition-colors"
               onClick={async () => { 
                 setStarted(true); 
-                setProgress(0);
                 await startCalibration();
-                // Simulate progress
-                const interval = setInterval(() => {
-                  setProgress(prev => {
-                    if (prev >= 100) {
-                      clearInterval(interval);
-                      return 100;
-                    }
-                    return prev + 10;
-                  });
-                }, 300);
               }}
             >
-              Start calibration
+              🚀 Start Calibration
             </button>
             <button
-              className="px-5 h-11 rounded-xl border border-neutral-300"
+              className="px-8 py-4 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold text-lg hover:bg-gray-50 transition-colors"
               onClick={onClose}
             >
-              Cancel
+              ❌ Cancel
             </button>
-            <div className="text-xs text-neutral-500 ml-auto">
-              Tip: press <kbd>Space</kbd> to re-center later
+          </div>
+        </div>
+      ) : (
+        // Active calibration screen
+        <div className="w-full h-full relative">
+          {/* Progress bar at top */}
+          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-96 max-w-[90vw]">
+            <div className="bg-white/20 rounded-full h-3 overflow-hidden backdrop-blur-sm">
+              <div
+                className="h-full bg-white transition-all duration-300"
+                style={{ width: `${Math.round(state.progress01 * 100)}%` }}
+              />
+            </div>
+            <div className="text-white text-center mt-2 font-semibold">
+              Step {state.currentIndex} of {state.totalPoints}
             </div>
           </div>
-        ) : (
-          <div className="mt-5 flex items-center gap-3">
-            <button
-              className="px-5 h-11 rounded-xl border border-neutral-300"
-              onClick={() => {
-                stop();
-                setStarted(false);
-                setProgress(0);
+
+          {/* Instructions */}
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-3">
+              <p className="text-xl font-semibold text-gray-800">
+                {state.message || "Look at the blue dot"}
+              </p>
+            </div>
+          </div>
+
+          {/* Calibration target dot */}
+          {state.target && (
+            <div
+              className="absolute w-8 h-8 rounded-full bg-blue-500 border-4 border-white shadow-lg animate-pulse"
+              style={{
+                left: state.target.x - 16,
+                top: state.target.y - 16,
+                transform: 'scale(1.2)',
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
               }}
             >
-              Stop
-            </button>
-            <div className="ml-auto text-sm">
-              {Math.floor(progress / 10)}/10
+              <div className="absolute inset-2 rounded-full bg-white animate-ping" />
+            </div>
+          )}
+
+          {/* Current status */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl px-8 py-4">
+              <div className="flex items-center gap-4">
+                <button
+                  className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
+                  onClick={() => {
+                    cancelCalibration();
+                    setStarted(false);
+                    onClose?.();
+                  }}
+                >
+                  🛑 Stop Calibration
+                </button>
+                <div className="text-gray-700">
+                  {state.isCalibrating ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                      Calibrating...
+                    </span>
+                  ) : state.isCalibrated ? (
+                    <span className="flex items-center gap-2 text-green-600 font-semibold">
+                      ✅ Calibration Complete!
+                    </span>
+                  ) : (
+                    <span className="text-orange-600">Preparing...</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

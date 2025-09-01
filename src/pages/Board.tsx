@@ -10,6 +10,7 @@ import BoardSettingsDialog, { BoardSettings, ProfileData } from '@/components/Bo
 import { useEyeTracking } from '@/hooks/useEyeTracking';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { EyeTrackingDot } from '@/components/EyeTrackingDot';
+import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
 import { BoardTile } from '@/types/board';
 
@@ -35,6 +36,7 @@ const Board = () => {
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [settings, setSettings] = useState<BoardSettings>(() => {
     const s = localStorage.getItem('echoes_board_settings');
     return s ? JSON.parse(s) : { voiceRate: 1, voicePitch: 1, tileSize: 'md' };
@@ -97,16 +99,8 @@ const Board = () => {
       stop();
       toast({ title: '👁️ Eye tracking stopped', description: 'Eye tracking has been disabled.' });
     } else {
-      try {
-        await startCalibration();
-        toast({ title: '👁️ Eye tracking calibrated', description: 'Eye tracking is now active!' });
-      } catch (error) {
-        toast({ 
-          title: 'Calibration failed', 
-          description: 'Please allow camera access and try again.',
-          variant: 'destructive'
-        });
-      }
+      // Open calibration overlay instead of direct calibration
+      setCalibrationOpen(true);
     }
   };
 
@@ -343,21 +337,18 @@ const Board = () => {
         />
 
         {/* Calibration Overlay */}
-        {state.isCalibrating && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-white p-8 rounded-lg text-center max-w-md">
-              <div className="animate-spin text-4xl mb-4">👁️</div>
-              <h2 className="text-xl font-bold mb-2">Eye Tracking Calibration</h2>
-              <p className="text-gray-600 mb-4">
-                Look at the center of your screen and hold still. Calibration will complete in a few seconds.
-              </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-              </div>
-              <p className="text-sm text-gray-500">Make sure your camera can see your face clearly</p>
-            </div>
-          </div>
-        )}
+        <CalibrationOverlay
+          open={calibrationOpen}
+          onClose={() => {
+            setCalibrationOpen(false);
+            if (state.isCalibrated) {
+              toast({ 
+                title: '👁️ Eye tracking ready!', 
+                description: 'Calibration completed successfully. The red dot shows where you\'re looking.' 
+              });
+            }
+          }}
+        />
       </div>
     </div>
   );
