@@ -8,17 +8,17 @@ type Props = {
 
 // Большой оверлей с точками, прогрессом и подсказками.
 export default function CalibrationOverlay({ open, onClose }: Props) {
-  const { isCalibrated, isCalibrating, startCalibration, stopEyeTracking } = useEyeTracking();
+  const { state, startCalibration, stop } = useEyeTracking();
   const [started, setStarted] = useState(false);
   const [progress, setProgress] = useState(0);
 
   // Закрытие, когда калибровка закончилась
   useEffect(() => {
     if (!open) return;
-    if (started && !isCalibrating && isCalibrated) {
+    if (started && !state.isCalibrating && state.isCalibrated) {
       onClose?.();
     }
-  }, [open, started, isCalibrating, isCalibrated, onClose]);
+  }, [open, started, state.isCalibrating, state.isCalibrated, onClose]);
 
   if (!open) return null;
 
@@ -42,7 +42,7 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
         {/* Stage / target */}
         <div className="relative h-[360px] rounded-lg border border-neutral-200 bg-neutral-50">
           <div className="absolute inset-x-0 bottom-3 text-center text-xs text-neutral-600">
-            {isCalibrating ? "Calibrating…" : "Ready"}
+            {state.isCalibrating ? "Calibrating…" : "Ready"}
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
             <button
               className="px-5 h-11 rounded-xl border border-neutral-300"
               onClick={() => {
-                stopEyeTracking();
+                stop();
                 setStarted(false);
                 setProgress(0);
               }}

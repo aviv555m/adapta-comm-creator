@@ -388,6 +388,3 @@ export function useEyeTracking(): UseEyeTrackingRet {
     getStoredCalibration, clearCalibration,
   };
 }
-
-// small export for external use if needed
-export type { Affine2D } from "./useEyeTracking";

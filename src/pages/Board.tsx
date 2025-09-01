@@ -22,12 +22,12 @@ const Board = () => {
   
   // Eye tracking
   const { 
-    isCalibrated, 
-    isCalibrating, 
-    eyePosition, 
-    startCalibration, 
-    stopEyeTracking, 
-    isTrackingActive 
+    gaze, 
+    active, 
+    state, 
+    start, 
+    stop, 
+    startCalibration 
   } = useEyeTracking();
   
   // Usage tracking
@@ -93,8 +93,8 @@ const Board = () => {
   };
 
   const handleEyeTrackingToggle = async () => {
-    if (isTrackingActive) {
-      stopEyeTracking();
+    if (active) {
+      stop();
       toast({ title: '👁️ Eye tracking stopped', description: 'Eye tracking has been disabled.' });
     } else {
       try {
@@ -175,17 +175,17 @@ const Board = () => {
             <Button
               variant="default"
               className={`${
-                isTrackingActive 
+                active 
                   ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'bg-orange-600 text-white hover:bg-orange-700'
-              } ${isCalibrating ? 'animate-pulse' : ''}`}
+              } ${state.isCalibrating ? 'animate-pulse' : ''}`}
               onClick={handleEyeTrackingToggle}
-              disabled={isCalibrating}
-              title={isTrackingActive ? 'Stop eye tracking' : 'Start eye tracking'}
+              disabled={state.isCalibrating}
+              title={active ? 'Stop eye tracking' : 'Start eye tracking'}
             >
               <span className="mr-1">👁️</span>
-              {isTrackingActive ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-              {isCalibrating ? 'Calibrating...' : isTrackingActive ? 'Eye Off' : 'Eye Track'}
+              {active ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+              {state.isCalibrating ? 'Calibrating...' : active ? 'Eye Off' : 'Eye Track'}
             </Button>
           </div>
         </div>
@@ -337,13 +337,13 @@ const Board = () => {
 
         {/* Eye Tracking Dot */}
         <EyeTrackingDot 
-          x={eyePosition?.x || 0} 
-          y={eyePosition?.y || 0} 
-          isVisible={isTrackingActive && !!eyePosition} 
+          x={gaze?.x || 0} 
+          y={gaze?.y || 0} 
+          isVisible={active && !!gaze} 
         />
 
         {/* Calibration Overlay */}
-        {isCalibrating && (
+        {state.isCalibrating && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-lg text-center max-w-md">
               <div className="animate-spin text-4xl mb-4">👁️</div>
