@@ -13,6 +13,7 @@ import { EyeTrackingDot } from '@/components/EyeTrackingDot';
 import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
 import { BoardTile } from '@/types/board';
+import { AIChatBot } from '@/components/AIChatBot';
 
 const Board = () => {
   const navigate = useNavigate();
@@ -347,6 +348,16 @@ const Board = () => {
                 description: 'Calibration completed successfully. The red dot shows where you\'re looking.' 
               });
             }
+          }}
+        />
+
+        {/* AI Chat Bot */}
+        <AIChatBot
+          currentSettings={settings}
+          onUpdateSettings={(newSettings) => {
+            const updatedSettings = { ...settings, ...newSettings };
+            setSettings(updatedSettings);
+            localStorage.setItem('echoes_board_settings', JSON.stringify(updatedSettings));
           }}
         />
       </div>
