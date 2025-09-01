@@ -37,10 +37,11 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const isFormValid = validateEmail(email) && password.length >= 8;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
     setLoading(true);
     setErrors({});
     
@@ -71,7 +72,7 @@ const Login = () => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && validateForm() && !loading) {
+    if (e.key === 'Enter' && isFormValid && !loading) {
       handleSubmit(e as any);
     }
   };
@@ -157,7 +158,7 @@ const Login = () => {
           <Button
             type="submit"
             className="w-full primary-button"
-            disabled={!validateForm() || loading}
+            disabled={!isFormValid || loading}
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
