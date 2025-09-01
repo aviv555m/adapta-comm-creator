@@ -71,7 +71,6 @@ const Login = () => {
     }
   };
 
-
   return (
     <div className="app-container">
       <div className="app-card">
@@ -80,7 +79,7 @@ const Login = () => {
           <div className="w-16 h-16 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
             <div className="w-8 h-8 bg-white rounded-full"></div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to AdaptaComm</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to Echoes</h1>
           <p className="text-muted-foreground">Sign in to continue</p>
         </div>
 
@@ -92,8 +91,9 @@ const Login = () => {
             className="w-full h-12"
             onClick={handleGoogleSignIn}
             disabled={loading}
+            title="Demo login — connect Google OAuth via Supabase for real accounts"
           >
-            Continue with Google
+            Continue with Google 🌐
           </Button>
 
           {/* Divider */}
@@ -153,7 +153,7 @@ const Login = () => {
             className="w-full primary-button"
             disabled={!isFormValid || loading}
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Signing in...' : 'Sign in 🔐'}
           </Button>
 
           {/* Footer Links */}
