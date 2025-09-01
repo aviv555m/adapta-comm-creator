@@ -71,11 +71,6 @@ const Login = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isFormValid && !loading) {
-      handleSubmit(e as any);
-    }
-  };
 
   return (
     <div className="app-container">
@@ -120,7 +115,6 @@ const Login = () => {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
                 className={`pl-10 h-12 ${errors.email ? 'border-red-500' : ''}`}
                 disabled={loading}
               />
@@ -139,7 +133,6 @@ const Login = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
                 className={`pl-10 h-12 ${errors.password ? 'border-red-500' : ''}`}
                 disabled={loading}
               />
