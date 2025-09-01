@@ -1,27 +1,37 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Mic, RotateCcw, Volume2 } from 'lucide-react';
+import { Settings, Mic, RotateCcw, Volume2, Eye, EyeOff } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import BoardSettingsDialog, { BoardSettings, ProfileData } from '@/components/BoardSettingsDialog';
-
-interface BoardTile {
-  id: string;
-  text: string;
-  emoji?: string;
-  category: string;
-  priority: number;
-}
+import { useEyeTracking } from '@/hooks/useEyeTracking';
+import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { EyeTrackingDot } from '@/components/EyeTrackingDot';
+import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
+import { BoardTile } from '@/types/board';
 
 const Board = () => {
   const navigate = useNavigate();
   const { questions, resetQuiz } = useQuiz();
   const { toast } = useToast();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
-  const [currentCategory, setCurrentCategory] = useState('Basic Needs');
+  const [currentCategory, setCurrentCategory] = useState('Most Used');
+  
+  // Eye tracking
+  const { 
+    isCalibrated, 
+    isCalibrating, 
+    eyePosition, 
+    startCalibration, 
+    stopEyeTracking, 
+    isTrackingActive 
+  } = useEyeTracking();
+  
+  // Usage tracking
+  const { trackTileUsage, getMostUsedTiles } = useUsageTracking();
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -36,64 +46,13 @@ const Board = () => {
 
   // Generate board configuration based on quiz answers
   const generateBoardConfig = () => {
-    const orgPreference = questions.find(q => q.id === 31)?.value || 'Mix of both approaches';
-    const communicationNeeds = questions.find(q => q.id === 1)?.value;
-    const interests = questions.find(q => q.id === 11)?.value;
+    const allTiles = generateExpandedBoardData();
+    const allCategories = getAllCategories();
     
-    // Core phrases for top row
-    const corePhases: BoardTile[] = [
-      { id: 'core1', text: 'I need help', emoji: '🆘', category: 'Core', priority: 1 },
-      { id: 'core2', text: 'Please help me', emoji: '🙏', category: 'Core', priority: 1 },
-      { id: 'core3', text: 'Thank you', emoji: '🙇', category: 'Core', priority: 1 },
-      { id: 'core4', text: 'Yes', emoji: '👍', category: 'Core', priority: 1 },
-      { id: 'core5', text: 'No', emoji: '👎', category: 'Core', priority: 1 },
-      { id: 'core6', text: 'Please stop', emoji: '✋', category: 'Core', priority: 1 },
-    ];
-
-    // Category-based tiles
-    const basicNeeds: BoardTile[] = [
-      { id: 'basic1', text: 'I am hungry', emoji: '🍽️', category: 'Basic Needs', priority: 2 },
-      { id: 'basic2', text: 'I am thirsty', emoji: '🥤', category: 'Basic Needs', priority: 2 },
-      { id: 'basic3', text: 'I need the bathroom', emoji: '🚻', category: 'Basic Needs', priority: 2 },
-      { id: 'basic4', text: 'I am tired', emoji: '😴', category: 'Basic Needs', priority: 2 },
-      { id: 'basic5', text: 'I am hot', emoji: '🔥', category: 'Basic Needs', priority: 2 },
-      { id: 'basic6', text: 'I am cold', emoji: '🥶', category: 'Basic Needs', priority: 2 },
-    ];
-
-    const feelings: BoardTile[] = [
-      { id: 'feel1', text: 'I am happy', emoji: '🙂', category: 'Feelings', priority: 3 },
-      { id: 'feel2', text: 'I am sad', emoji: '😢', category: 'Feelings', priority: 3 },
-      { id: 'feel3', text: 'I am angry', emoji: '😠', category: 'Feelings', priority: 3 },
-      { id: 'feel4', text: 'I am scared', emoji: '😨', category: 'Feelings', priority: 3 },
-      { id: 'feel5', text: 'I am excited', emoji: '🤩', category: 'Feelings', priority: 3 },
-      { id: 'feel6', text: 'I am confused', emoji: '😕', category: 'Feelings', priority: 3 },
-    ];
-
-    const actions: BoardTile[] = [
-      { id: 'action1', text: 'I want to go', emoji: '🏃', category: 'Actions', priority: 3 },
-      { id: 'action2', text: 'I want to stay', emoji: '🧍', category: 'Actions', priority: 3 },
-      { id: 'action3', text: 'I want to play', emoji: '🎮', category: 'Actions', priority: 3 },
-      { id: 'action4', text: 'I want to rest', emoji: '🛌', category: 'Actions', priority: 3 },
-      { id: 'action5', text: 'I want to eat', emoji: '🍎', category: 'Actions', priority: 3 },
-      { id: 'action6', text: 'I want to talk', emoji: '💬', category: 'Actions', priority: 3 },
-    ];
-
-    // Determine layout based on organization preference
-    let tiles: BoardTile[] = [];
-    
-    if (orgPreference === 'Most used words first') {
-      tiles = [...corePhases, ...basicNeeds, ...feelings, ...actions];
-    } else if (orgPreference === 'Organized by clear categories') {
-      tiles = [...basicNeeds, ...feelings, ...actions, ...corePhases];
-    } else {
-      // Mix of both approaches
-      tiles = [...corePhases, ...basicNeeds, ...feelings, ...actions];
-    }
-
     return {
-      tiles,
-      layout: orgPreference,
-      categories: ['Core', 'Basic Needs', 'Feelings', 'Actions']
+      tiles: allTiles,
+      layout: 'Comprehensive AAC Board',
+      categories: allCategories
     };
   };
 
@@ -103,6 +62,8 @@ const Board = () => {
   // Filter tiles by current category
   const filteredTiles = currentCategory === 'All' 
     ? boardConfig.tiles 
+    : currentCategory === 'Most Used'
+    ? getMostUsedTiles(boardConfig.tiles, 12)
     : boardConfig.tiles.filter(tile => tile.category === currentCategory);
 
   // Get user preferences for display
@@ -127,8 +88,26 @@ const Board = () => {
 
   const handleTileClick = (tile: BoardTile) => {
     setSelectedTile(tile);
-    // Text-to-speech with settings
+    trackTileUsage(tile.id);
     speakText(tile.text);
+  };
+
+  const handleEyeTrackingToggle = async () => {
+    if (isTrackingActive) {
+      stopEyeTracking();
+      toast({ title: '👁️ Eye tracking stopped', description: 'Eye tracking has been disabled.' });
+    } else {
+      try {
+        await startCalibration();
+        toast({ title: '👁️ Eye tracking calibrated', description: 'Eye tracking is now active!' });
+      } catch (error) {
+        toast({ 
+          title: 'Calibration failed', 
+          description: 'Please allow camera access and try again.',
+          variant: 'destructive'
+        });
+      }
+    }
   };
 
   const handleNewSetup = () => {
@@ -153,7 +132,7 @@ const Board = () => {
           <div className="flex space-x-2">
             <Button
               variant="default"
-              className="secondary-button bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              className="bg-blue-600 text-white hover:bg-blue-700"
               onClick={() => setSettingsOpen(true)}
               title="Open settings"
             >
@@ -163,7 +142,7 @@ const Board = () => {
             </Button>
             <Button
               variant="default"
-              className="secondary-button bg-accent text-accent-foreground hover:bg-accent/80"
+              className="bg-purple-600 text-white hover:bg-purple-700"
               onClick={() =>
                 toast({
                   title: 'AI Adapt',
@@ -177,7 +156,7 @@ const Board = () => {
             </Button>
             <Button
               variant="default"
-              className="secondary-button"
+              className="bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
                 if (selectedTile) {
                   speakText(selectedTile.text);
@@ -192,6 +171,21 @@ const Board = () => {
               <span className="mr-1">▶️</span>
               <Mic className="h-4 w-4 mr-1" />
               Ready
+            </Button>
+            <Button
+              variant="default"
+              className={`${
+                isTrackingActive 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  : 'bg-orange-600 text-white hover:bg-orange-700'
+              } ${isCalibrating ? 'animate-pulse' : ''}`}
+              onClick={handleEyeTrackingToggle}
+              disabled={isCalibrating}
+              title={isTrackingActive ? 'Stop eye tracking' : 'Start eye tracking'}
+            >
+              <span className="mr-1">👁️</span>
+              {isTrackingActive ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+              {isCalibrating ? 'Calibrating...' : isTrackingActive ? 'Eye Off' : 'Eye Track'}
             </Button>
           </div>
         </div>
@@ -216,11 +210,11 @@ const Board = () => {
                     <Button
                       key={category}
                       variant={currentCategory === category ? 'default' : 'outline'}
-                      className="w-full justify-start"
+                      className="w-full justify-start text-left"
                       onClick={() => setCurrentCategory(category)}
                     >
                       <span className="mr-2">
-                        {category === 'Core' ? '⭐' : category === 'Basic Needs' ? '🍽️' : category === 'Feelings' ? '🙂' : '➡️'}
+                        {getCategoryEmoji(category)}
                       </span>
                       {category}
                     </Button>
@@ -340,6 +334,30 @@ const Board = () => {
             toast({ title: 'Settings saved', description: 'Your preferences have been updated.' });
           }}
         />
+
+        {/* Eye Tracking Dot */}
+        <EyeTrackingDot 
+          x={eyePosition?.x || 0} 
+          y={eyePosition?.y || 0} 
+          isVisible={isTrackingActive && !!eyePosition} 
+        />
+
+        {/* Calibration Overlay */}
+        {isCalibrating && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg text-center max-w-md">
+              <div className="animate-spin text-4xl mb-4">👁️</div>
+              <h2 className="text-xl font-bold mb-2">Eye Tracking Calibration</h2>
+              <p className="text-gray-600 mb-4">
+                Look at the center of your screen and hold still. Calibration will complete in a few seconds.
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+              </div>
+              <p className="text-sm text-gray-500">Make sure your camera can see your face clearly</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
