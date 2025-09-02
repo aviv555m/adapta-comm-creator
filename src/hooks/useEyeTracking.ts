@@ -22,6 +22,7 @@ export interface CalibrationState {
   progress01: number;          // 0..1 by points
   target?: { x: number; y: number };
   message?: string;
+  holdPct?: number;            // 0..1 progress while holding on a point
 }
 
 export interface UseEyeTrackingRet {
@@ -178,9 +179,10 @@ export function useEyeTracking(): UseEyeTrackingRet {
     if (saved) affRef.current = saved;
   }, []);
 
-  // start: init camera + webgazer
-  const start = async () => {
-    if (active) return;
+// start: init camera + webgazer
+const start = async () => {
+  if (active) return;
+  try {
     setActive(true);
     const WG = await import("webgazer");
     webgazerRef.current = WG.default;
@@ -215,7 +217,16 @@ export function useEyeTracking(): UseEyeTrackingRet {
         setGaze({ x: emaRef.current.x, y: emaRef.current.y, timestamp: r.timestamp });
       })
       .begin();
-  };
+  } catch (err) {
+    console.error("Eye tracking start failed", err);
+    setActive(false);
+    setState(s => ({
+      ...s,
+      isCalibrating: false,
+      message: "Camera permission is required for eye tracking"
+    }));
+  }
+};
 
   const stop = () => {
     if (window.webgazer) window.webgazer.end();
@@ -224,94 +235,106 @@ export function useEyeTracking(): UseEyeTrackingRet {
     setGaze(null);
   };
 
-  // -------- Calibration flow --------
-  const startCalibration = async () => {
-    await start();
+// -------- Calibration flow --------
+const startCalibration = async () => {
+  await start();
 
-    const points = buildGridPoints(3, 3, 0.12); // 3×3, поля 12% по краям
-    const cp: CalibPoint[] = points.map(p => ({ tx: p.x, ty: p.y, samples: [] }));
+  const points = buildGridPoints(4, 3, 0.12); // 4×3, more steps for better fit
+  const cp: CalibPoint[] = points.map(p => ({ tx: p.x, ty: p.y, samples: [] }));
 
-    setState({
-      isCalibrating: true,
+  setState({
+    isCalibrating: true,
+    isCalibrated: false,
+    currentIndex: 0,
+    totalPoints: cp.length,
+    progress01: 0,
+    target: { x: cp[0].tx, y: cp[0].ty },
+    message: "Look at the dot and hold steady",
+    holdPct: 0,
+  });
+
+  // cancel flag
+  let alive = true;
+  cancelCalibRef.current = () => { alive = false; };
+
+  const perPointMs = 1600;     // hold gaze duration per point
+  const minSamples = 50;       // minimum samples per point
+
+  for (let i = 0; i < cp.length && alive; i++) {
+    // collect samples while holding
+    const t0 = performance.now();
+    cp[i].samples = [];
+    while (performance.now() - t0 < perPointMs && alive) {
+      const elapsed = performance.now() - t0;
+      if (raw) cp[i].samples.push(raw);
+      const hp = clamp(elapsed / perPointMs, 0, 1);
+      setState(s => ({ ...s, holdPct: hp }));
+      await sleep(8);
+    }
+    // top-up if needed
+    while (cp[i].samples.length < minSamples && alive) {
+      if (raw) cp[i].samples.push(raw);
+      await sleep(8);
+    }
+
+    // denoise and median
+    const kept = removeOutliersToPct(cp[i].samples, 0.8);
+    cp[i].median = robustMedianXY(kept);
+
+    // progress + next target
+    const nextIdx = i + 1;
+    setState(s => ({
+      ...s,
+      currentIndex: nextIdx,
+      progress01: nextIdx / cp.length,
+      holdPct: 0,
+      target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
+      message: nextIdx < cp.length ? "Look at the dot and hold steady" : "Finishing up...",
+    }));
+    await sleep(250);
+  }
+
+  if (!alive) {
+    setState(s => ({ ...s, isCalibrating: false, message: "Calibration canceled", holdPct: 0 }));
+    return;
+  }
+
+  // build correspondences (raw->target)
+  const src: { x: number; y: number }[] = [];
+  const dst: { x: number; y: number }[] = [];
+  for (const p of cp) {
+    if (p.median) {
+      src.push({ x: p.median.x, y: p.median.y });
+      dst.push({ x: p.tx, y: p.ty });
+    }
+  }
+  try {
+    let T = solveAffineLS(src, dst);
+    affRef.current = T;
+    saveCalibration(T);
+
+    // quick recenter to reduce residual bias
+    await quickRecenter(600);
+
+    setState(s => ({
+      ...s,
+      isCalibrating: false,
+      isCalibrated: true,
+      message: "Calibration complete",
+      target: undefined,
+      holdPct: 0,
+    }));
+  } catch (e) {
+    console.error(e);
+    setState(s => ({
+      ...s,
+      isCalibrating: false,
       isCalibrated: false,
-      currentIndex: 0,
-      totalPoints: cp.length,
-      progress01: 0,
-      target: { x: cp[0].tx, y: cp[0].ty },
-      message: "Look at the dot until it turns green",
-    });
-
-    // подписка на поток сырых точек
-    let alive = true;
-    cancelCalibRef.current = () => { alive = false; };
-    const unsub = (window as any).__calibTick__ || null;
-
-    const perPointMs = 1200;     // сколько держать взгляд на точке
-    const minSamples = 40;       // минимум сэмплов на точку
-
-    for (let i = 0; i < cp.length && alive; i++) {
-      // собираем сэмплы во время удержания точки
-      const t0 = performance.now();
-      cp[i].samples = [];
-      while (performance.now() - t0 < perPointMs && alive) {
-        if (raw) cp[i].samples.push(raw);
-        await sleep(8); // ~120 Гц попытка
-      }
-      // если сэмплов мало — добрать
-      while (cp[i].samples.length < minSamples && alive) {
-        if (raw) cp[i].samples.push(raw);
-        await sleep(8);
-      }
-
-      // чистим выбросы и считаем медиану
-      const kept = removeOutliersToPct(cp[i].samples, 0.8);
-      cp[i].median = robustMedianXY(kept);
-
-      // обновляем прогресс и цель
-      const nextIdx = i + 1;
-      setState(s => ({
-        ...s,
-        currentIndex: nextIdx,
-        progress01: nextIdx / cp.length,
-        target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
-      }));
-      await sleep(250);
-    }
-
-    if (!alive) {
-      setState(s => ({ ...s, isCalibrating: false, message: "Calibration canceled" }));
-      return;
-    }
-
-    // собираем соответствия (raw->target)
-    const src: { x: number; y: number }[] = [];
-    const dst: { x: number; y: number }[] = [];
-    for (const p of cp) {
-      if (p.median) {
-        src.push({ x: p.median.x, y: p.median.y });
-        dst.push({ x: p.tx, y: p.ty });
-      }
-    }
-    try {
-      const T = solveAffineLS(src, dst);
-      affRef.current = T;
-      saveCalibration(T);
-      setState(s => ({
-        ...s,
-        isCalibrating: false,
-        isCalibrated: true,
-        message: "Calibration complete",
-      }));
-    } catch (e) {
-      console.error(e);
-      setState(s => ({
-        ...s,
-        isCalibrating: false,
-        isCalibrated: false,
-        message: "Calibration failed — not enough good samples",
-      }));
-    }
-  };
+      message: "Calibration failed — try again in better lighting",
+      holdPct: 0,
+    }));
+  }
+};
 
   const cancelCalibration = () => {
     cancelCalibRef.current?.();

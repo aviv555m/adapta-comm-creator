@@ -10,6 +10,12 @@ export type BoardSettings = {
   voiceRate: number;
   voicePitch: number;
   tileSize: 'sm' | 'md' | 'lg';
+  gridColsMobile?: 2 | 3 | 4 | 5;
+  gridColsDesktop?: 2 | 3 | 4 | 5;
+  highContrast?: boolean;
+  showLabels?: boolean;
+  showEmoji?: boolean;
+  showGazeDot?: boolean;
 };
 
 export type ProfileData = {
@@ -25,7 +31,7 @@ interface BoardSettingsDialogProps {
   onSave: (settings: BoardSettings, profile: ProfileData) => void;
 }
 
-const defaultSettings: BoardSettings = { voiceRate: 1, voicePitch: 1, tileSize: 'md' };
+const defaultSettings: BoardSettings = { voiceRate: 1, voicePitch: 1, tileSize: 'md', gridColsMobile: 2, gridColsDesktop: 3, highContrast: false, showLabels: true, showEmoji: true, showGazeDot: true };
 const defaultProfile: ProfileData = { name: '', interests: '' };
 
 export function BoardSettingsDialog({

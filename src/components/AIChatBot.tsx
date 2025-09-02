@@ -24,7 +24,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi! I'm your AAC board assistant. I can help you customize your board. Try saying things like:\n\n• 'Make the tiles bigger'\n• 'Change the voice speed to slower'\n• 'Make the voice higher pitched'\n• 'Set tile size to small'",
+      content: "Hi! I'm your AAC board assistant. I can help you customize your board. Try things like:\n\n• 'Make the tiles bigger'\n• 'Change the voice speed to slower'\n• 'Use high contrast mode'\n• 'Show 4 columns' or 'use 2 columns on mobile'\n• 'Hide labels' / 'Show emojis'\n• 'Hide the gaze dot'",
       isUser: false,
       timestamp: new Date()
     }
@@ -72,87 +72,125 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {
-    const lowercaseMsg = message.toLowerCase();
+    const text = message.trim();
+    const lowercaseMsg = text.toLowerCase();
     let responseMessage = '';
     let settingsUpdate: Partial<BoardSettings> = {};
 
     // Tile size commands
-    if (lowercaseMsg.includes('bigger') || lowercaseMsg.includes('larger') || lowercaseMsg.includes('large')) {
-      if (lowercaseMsg.includes('tile')) {
-        settingsUpdate.tileSize = 'lg';
-        responseMessage = 'Perfect! I\'ve made the tiles larger for you.';
-      }
-    } else if (lowercaseMsg.includes('smaller') || lowercaseMsg.includes('small')) {
-      if (lowercaseMsg.includes('tile')) {
-        settingsUpdate.tileSize = 'sm';
-        responseMessage = 'Great! I\'ve made the tiles smaller for better visibility.';
-      }
-    } else if (lowercaseMsg.includes('medium') || lowercaseMsg.includes('normal')) {
-      if (lowercaseMsg.includes('tile')) {
-        settingsUpdate.tileSize = 'md';
-        responseMessage = 'Done! Tiles are now set to medium size.';
-      }
+    if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+      settingsUpdate.tileSize = 'lg';
+      responseMessage = "I've made the tiles larger.";
+    } else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+      settingsUpdate.tileSize = 'sm';
+      responseMessage = 'Tiles set to small.';
+    } else if (/(medium|normal)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+      settingsUpdate.tileSize = 'md';
+      responseMessage = 'Tiles set to medium.';
     }
 
-    // Voice speed commands
-    if (lowercaseMsg.includes('voice') || lowercaseMsg.includes('speech')) {
-      if (lowercaseMsg.includes('faster') || lowercaseMsg.includes('speed up') || lowercaseMsg.includes('quick')) {
+    // Columns and layout density
+    const colsMatch = lowercaseMsg.match(/(\d+)\s*(col|column|columns)/);
+    if (colsMatch) {
+      const n = Math.max(2, Math.min(5, parseInt(colsMatch[1], 10)));
+      if (/mobile/.test(lowercaseMsg)) {
+        settingsUpdate.gridColsMobile = n as any;
+        responseMessage = `${n} columns on mobile set.`;
+      } else {
+        settingsUpdate.gridColsDesktop = n as any;
+        responseMessage = `${n} columns set.`;
+      }
+    }
+    if (/more\s+tiles|denser|tighter|increase\s+columns/.test(lowercaseMsg)) {
+      settingsUpdate.gridColsDesktop = Math.min((currentSettings.gridColsDesktop || 3) + 1, 5) as any;
+      responseMessage = 'Increased columns for more tiles on screen.';
+    }
+    if (/less\s+tiles|looser|decrease\s+columns|fewer\s+tiles/.test(lowercaseMsg)) {
+      settingsUpdate.gridColsDesktop = Math.max((currentSettings.gridColsDesktop || 3) - 1, 2) as any;
+      responseMessage = 'Decreased columns for larger tiles.';
+    }
+
+    // High contrast
+    if (/high\s*contrast|contrast\s*mode/.test(lowercaseMsg)) {
+      const on = !/(off|disable|stop)/.test(lowercaseMsg);
+      settingsUpdate.highContrast = on;
+      responseMessage = on ? 'High contrast mode enabled.' : 'High contrast mode disabled.';
+    }
+
+    // Labels and emojis
+    if (/hide\s*(labels|text)/.test(lowercaseMsg)) {
+      settingsUpdate.showLabels = false;
+      responseMessage = 'Labels hidden.';
+    } else if (/(show|display)\s*(labels|text)/.test(lowercaseMsg)) {
+      settingsUpdate.showLabels = true;
+      responseMessage = 'Labels shown.';
+    }
+    if (/hide\s*(emoji|emojis|icons|pictures)/.test(lowercaseMsg)) {
+      settingsUpdate.showEmoji = false;
+      responseMessage = 'Emojis hidden.';
+    } else if (/(show|display)\s*(emoji|emojis|icons|pictures)/.test(lowercaseMsg)) {
+      settingsUpdate.showEmoji = true;
+      responseMessage = 'Emojis shown.';
+    }
+
+    // Gaze dot visibility
+    if (/(show|hide)\s*(gaze|eye|tracking)\s*(dot|cursor)?/.test(lowercaseMsg)) {
+      const show = /show/.test(lowercaseMsg);
+      settingsUpdate.showGazeDot = show;
+      responseMessage = show ? 'Gaze dot shown.' : 'Gaze dot hidden.';
+    }
+
+    // Voice speed
+    if (/(voice|speech)/.test(lowercaseMsg)) {
+      if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-        responseMessage = 'I\'ve increased the voice speed for you!';
-      } else if (lowercaseMsg.includes('slower') || lowercaseMsg.includes('slow down')) {
+        responseMessage = "I've increased the voice speed.";
+      } else if (/(slower|slow down)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
-        responseMessage = 'I\'ve slowed down the voice speed for better clarity.';
-      } else if (lowercaseMsg.includes('normal speed')) {
+        responseMessage = 'Voice speed reduced.';
+      } else if (/normal\s*speed/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = 1;
         responseMessage = 'Voice speed reset to normal.';
       }
 
-      // Voice pitch commands
-      if (lowercaseMsg.includes('higher') || lowercaseMsg.includes('pitch up')) {
+      if (/(higher|pitch up)/.test(lowercaseMsg)) {
         settingsUpdate.voicePitch = Math.min((currentSettings.voicePitch || 1) + 0.2, 2);
-        responseMessage = 'I\'ve made the voice higher pitched!';
-      } else if (lowercaseMsg.includes('lower') || lowercaseMsg.includes('pitch down') || lowercaseMsg.includes('deeper')) {
+        responseMessage = 'Higher voice pitch set.';
+      } else if (/(lower|pitch down|deeper)/.test(lowercaseMsg)) {
         settingsUpdate.voicePitch = Math.max((currentSettings.voicePitch || 1) - 0.2, 0.5);
-        responseMessage = 'I\'ve made the voice lower and deeper.';
-      } else if (lowercaseMsg.includes('normal pitch')) {
+        responseMessage = 'Lower/deeper voice set.';
+      } else if (/normal\s*pitch/.test(lowercaseMsg)) {
         settingsUpdate.voicePitch = 1;
         responseMessage = 'Voice pitch reset to normal.';
       }
     }
 
-    // Help and suggestions
-    if (lowercaseMsg.includes('help') || lowercaseMsg.includes('what can you do')) {
-      responseMessage = `I can help you customize your AAC board! Here's what I can do:
+    // Help
+    if (/help|what can you do/.test(lowercaseMsg)) {
+      responseMessage = `I can customize your AAC board. Try:
 
-🔧 **Tile Settings:**
-• "Make tiles bigger/smaller/medium"
-• "Set tile size to large/small"
+🔧 Tiles & Layout:
+• Make tiles bigger/smaller/medium
+• Show 4 columns / use 2 columns on mobile
+• Enable high contrast
+• Hide labels / Show emojis
 
-🎤 **Voice Settings:**
-• "Make voice faster/slower"
-• "Higher/lower pitch"
-• "Speed up the voice"
-• "Make voice deeper"
+🎤 Voice:
+• Make voice faster/slower
+• Higher/lower pitch
 
-Just tell me what you'd like to change and I'll help you customize it!`;
+👁️ Eye Tracking:
+• Show/Hide gaze dot`;
     }
 
-    // Default response if no command recognized
+    // Default
     if (!responseMessage) {
-      responseMessage = `I understand you want to customize something, but I'm not sure exactly what. 
-
-Try being more specific like:
-• "Make the tiles bigger"
-• "Slow down the voice"
-• "Make the voice higher pitched"
-• "Set tiles to small size"
-
-What would you like to change about your board?`;
+      responseMessage = `I can help change tiles, columns, contrast, labels/emojis, voice, and gaze dot. What would you like?`;
     }
 
     return {
       message: responseMessage,
-      settings: Object.keys(settingsUpdate).length > 0 ? settingsUpdate : undefined
+      settings: Object.keys(settingsUpdate).length > 0 ? settingsUpdate : undefined,
     };
   };
 

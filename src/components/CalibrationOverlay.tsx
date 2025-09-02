@@ -68,7 +68,6 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
       ) : (
         // Active calibration screen
         <div className="w-full h-full relative">
-          {/* Progress bar at top */}
           <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-96 max-w-[90vw]">
             <div className="bg-white/20 rounded-full h-3 overflow-hidden backdrop-blur-sm">
               <div
@@ -77,7 +76,7 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
               />
             </div>
             <div className="text-white text-center mt-2 font-semibold">
-              Step {state.currentIndex} of {state.totalPoints}
+              Step {Math.min((state.currentIndex || 0) + 1, state.totalPoints)} of {state.totalPoints}
             </div>
           </div>
 
@@ -85,8 +84,11 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
           <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center">
             <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-3">
               <p className="text-xl font-semibold text-gray-800">
-                {state.message || "Look at the blue dot"}
+                {state.message || "Look at the dot and hold steady"}
               </p>
+              {typeof state.holdPct === 'number' && state.isCalibrating && (
+                <p className="text-sm text-gray-600 mt-1">Hold {Math.round((state.holdPct || 0) * 100)}%</p>
+              )}
             </div>
           </div>
 

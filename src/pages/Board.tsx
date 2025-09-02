@@ -38,10 +38,11 @@ const Board = () => {
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [calibrationOpen, setCalibrationOpen] = useState(false);
-  const [settings, setSettings] = useState<BoardSettings>(() => {
-    const s = localStorage.getItem('echoes_board_settings');
-    return s ? JSON.parse(s) : { voiceRate: 1, voicePitch: 1, tileSize: 'md' };
-  });
+const [settings, setSettings] = useState<BoardSettings>(() => {
+  const s = localStorage.getItem('echoes_board_settings');
+  const parsed = s ? JSON.parse(s) : {};
+  return { voiceRate: 1, voicePitch: 1, tileSize: 'md', gridColsMobile: 2, gridColsDesktop: 3, highContrast: false, showLabels: true, showEmoji: true, showGazeDot: true, ...parsed } as BoardSettings;
+});
   const [profile, setProfile] = useState<ProfileData>(() => {
     const p = localStorage.getItem('echoes_profile');
     return p ? JSON.parse(p) : { name: '', interests: '' };
@@ -112,8 +113,12 @@ const Board = () => {
     }
   };
 
-  const tileHeightClass =
-    settings.tileSize === 'sm' ? 'h-16' : settings.tileSize === 'lg' ? 'h-24' : 'h-20';
+const tileHeightClass =
+  settings.tileSize === 'sm' ? 'h-16' : settings.tileSize === 'lg' ? 'h-24' : 'h-20';
+
+// Grid columns from settings (safelisted)
+const gridMobileClass = (settings.gridColsMobile || 2) === 2 ? 'grid-cols-2' : (settings.gridColsMobile || 2) === 3 ? 'grid-cols-3' : (settings.gridColsMobile || 2) === 4 ? 'grid-cols-4' : 'grid-cols-5';
+const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' : (settings.gridColsDesktop || 3) === 3 ? 'grid-cols-3' : (settings.gridColsDesktop || 3) === 4 ? 'grid-cols-4' : 'grid-cols-5';
 
   return (
     <div className="app-container">
@@ -251,21 +256,25 @@ const Board = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className={`grid ${gridMobileClass} md:${gridDesktopClass} gap-3`}>
                   {filteredTiles.map((tile) => (
                     <Button
                       key={tile.id}
                       variant="outline"
                       className={`p-4 text-center whitespace-normal text-wrap border-2 transition-all ${tileHeightClass} ${
                         selectedTile?.id === tile.id 
-                          ? 'border-green-400 bg-green-50' 
-                          : 'border-gray-200 hover:border-primary hover:bg-accent'
+                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-green-400 bg-green-50')
+                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-gray-200 hover:border-primary hover:bg-accent')
                       }`}
                       onClick={() => handleTileClick(tile)}
                       title={tile.text}
                     >
-                      {tile.emoji && <span className="text-lg mr-2">{tile.emoji}</span>}
-                      <span className="text-sm font-medium">{tile.text}</span>
+                      {settings.showEmoji !== false && tile.emoji && (
+                        <span className="text-lg mr-2">{tile.emoji}</span>
+                      )}
+                      {settings.showLabels !== false && (
+                        <span className="text-sm font-medium">{tile.text}</span>
+                      )}
                     </Button>
                   ))}
                 </div>
@@ -334,7 +343,7 @@ const Board = () => {
         <EyeTrackingDot 
           x={gaze?.x || 0} 
           y={gaze?.y || 0} 
-          isVisible={active && !!gaze} 
+          isVisible={(settings.showGazeDot ?? true) && active && !!gaze} 
         />
 
         {/* Calibration Overlay */}
