@@ -9,16 +9,50 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type BoardSettings = {
+  // Voice & Audio
   voiceRate: number;
   voicePitch: number;
+  voiceVolume: number;
+  voiceGender: 'male' | 'female' | 'child';
+  soundFeedback: boolean;
+  
+  // Layout & Visual
   tileSize: 'sm' | 'md' | 'lg';
   gridColsMobile?: 2 | 3 | 4 | 5;
-  gridColsDesktop?: 2 | 3 | 4 | 5;
+  gridColsDesktop?: 2 | 3 | 4 | 5 | 6;
   highContrast?: boolean;
+  darkMode?: boolean;
   showLabels?: boolean;
   showEmoji?: boolean;
+  showIconsOnly?: boolean;
+  showTextOnly?: boolean;
+  tileBorderThickness: 'thin' | 'medium' | 'thick';
+  tileColorGrouping?: boolean;
+  
+  // Eye Tracking & Access
   showGazeDot?: boolean;
+  eyeTrackingEnabled?: boolean;
+  fixationTime: number; // in milliseconds
+  dwellHighlight?: boolean;
+  blinkToSelect?: boolean;
+  dualControlMode?: boolean;
+  
+  // Categories & Content
   enabledCategories?: string[];
+  categoryOrder?: string[];
+  
+  // AI & Smart Features
+  predictiveSuggestions?: boolean;
+  showHistory?: boolean;
+  showFavorites?: boolean;
+  contextualBoards?: boolean;
+  adaptiveLayout?: boolean;
+  
+  // Safety & Accessibility
+  lockLayout?: boolean;
+  safeMode?: boolean;
+  parentalMode?: boolean;
+  offlineMode?: boolean;
 };
 
 export type ProfileData = {
@@ -35,24 +69,65 @@ interface BoardSettingsDialogProps {
 }
 
 const defaultSettings: BoardSettings = { 
+  // Voice & Audio
   voiceRate: 1, 
-  voicePitch: 1, 
+  voicePitch: 1,
+  voiceVolume: 0.8,
+  voiceGender: 'female',
+  soundFeedback: true,
+  
+  // Layout & Visual
   tileSize: 'md', 
   gridColsMobile: 2, 
   gridColsDesktop: 3, 
-  highContrast: false, 
+  highContrast: false,
+  darkMode: false,
   showLabels: true, 
-  showEmoji: true, 
+  showEmoji: true,
+  showIconsOnly: false,
+  showTextOnly: false,
+  tileBorderThickness: 'medium',
+  tileColorGrouping: false,
+  
+  // Eye Tracking & Access
   showGazeDot: true,
-  enabledCategories: ['basic', 'daily life', 'social', 'fun', 'other']
+  eyeTrackingEnabled: false,
+  fixationTime: 1000,
+  dwellHighlight: true,
+  blinkToSelect: false,
+  dualControlMode: false,
+  
+  // Categories & Content
+  enabledCategories: ['basic-needs', 'core-words', 'food-drinks', 'emotions', 'actions'],
+  categoryOrder: ['basic-needs', 'core-words', 'food-drinks', 'emotions', 'actions'],
+  
+  // AI & Smart Features
+  predictiveSuggestions: false,
+  showHistory: true,
+  showFavorites: true,
+  contextualBoards: false,
+  adaptiveLayout: false,
+  
+  // Safety & Accessibility
+  lockLayout: false,
+  safeMode: true,
+  parentalMode: false,
+  offlineMode: true
 };
 
 const availableCategories = [
-  { id: 'basic', name: 'Basic', description: 'Colors, Numbers, Time, Weather' },
-  { id: 'daily life', name: 'Daily Life', description: 'Food, Clothing, School, Work, Health' },
-  { id: 'social', name: 'Social', description: 'People, Communication, Emotions' },
-  { id: 'fun', name: 'Fun', description: 'Music, Games, Sports, Activities' },
-  { id: 'other', name: 'Other', description: 'Animals, Nature, Places, Technology' }
+  { id: 'basic-needs', name: 'Basic Needs', description: 'Food, toilet, drink, sleep' },
+  { id: 'core-words', name: 'Core Words', description: 'I, want, go, stop, more, help' },
+  { id: 'food-drinks', name: 'Food & Drinks', description: 'Meals, snacks, beverages' },
+  { id: 'emotions', name: 'Emotions', description: 'Happy, sad, angry, tired' },
+  { id: 'actions', name: 'Actions', description: 'Play, eat, sleep, work' },
+  { id: 'people', name: 'People', description: 'Family, friends, teachers' },
+  { id: 'places', name: 'Places', description: 'Home, school, park, store' },
+  { id: 'animals', name: 'Animals', description: 'Pets, farm animals, wild animals' },
+  { id: 'basic-info', name: 'Colors, Numbers, Time', description: 'Basic information concepts' },
+  { id: 'school-work', name: 'School & Work', description: 'Learning, subjects, office' },
+  { id: 'activities', name: 'Music, Games, Sports', description: 'Entertainment and hobbies' },
+  { id: 'safety-health', name: 'Safety & Health', description: 'Medical, emergency, wellness' }
 ];
 const defaultProfile: ProfileData = { name: '', interests: '' };
 
@@ -99,11 +174,13 @@ export function BoardSettingsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="mt-2">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6 text-xs">
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="board">Board</TabsTrigger>
+            <TabsTrigger value="voice">Voice</TabsTrigger>
+            <TabsTrigger value="board">Layout</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="display">Display</TabsTrigger>
+            <TabsTrigger value="eyetrack">Eye Track</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="mt-4 space-y-4">
@@ -128,10 +205,10 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="board" className="mt-4 space-y-6">
+          <TabsContent value="voice" className="mt-4 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rate">Voice rate</Label>
+                <Label htmlFor="rate">Voice rate (speed)</Label>
                 <Input
                   id="rate"
                   type="number"
@@ -141,7 +218,7 @@ export function BoardSettingsDialog({
                   value={settings.voiceRate}
                   onChange={(e) => setSettings((s) => ({ ...s, voiceRate: Number(e.target.value) }))}
                 />
-                <p className="text-xs text-muted-foreground">0.5–2.0 (default 1.0)</p>
+                <p className="text-xs text-muted-foreground">0.5 = slow, 1.0 = normal, 2.0 = fast</p>
               </div>
 
               <div className="space-y-2">
@@ -155,10 +232,51 @@ export function BoardSettingsDialog({
                   value={settings.voicePitch}
                   onChange={(e) => setSettings((s) => ({ ...s, voicePitch: Number(e.target.value) }))}
                 />
-                <p className="text-xs text-muted-foreground">0.5–2.0 (default 1.0)</p>
+                <p className="text-xs text-muted-foreground">0.5 = low, 1.0 = normal, 2.0 = high</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="volume">Voice volume</Label>
+                <Input
+                  id="volume"
+                  type="number"
+                  step={0.1}
+                  min={0}
+                  max={1}
+                  value={settings.voiceVolume}
+                  onChange={(e) => setSettings((s) => ({ ...s, voiceVolume: Number(e.target.value) }))}
+                />
+                <p className="text-xs text-muted-foreground">0.0 = silent, 1.0 = full volume</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gender">Voice gender</Label>
+                <Select value={settings.voiceGender} onValueChange={(value) => setSettings(s => ({ ...s, voiceGender: value as 'male' | 'female' | 'child' }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Female voice</SelectItem>
+                    <SelectItem value="male">Male voice</SelectItem>
+                    <SelectItem value="child">Child voice</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Sound feedback</Label>
+                <p className="text-xs text-muted-foreground">Play click sound when tiles are pressed</p>
+              </div>
+              <Switch
+                checked={settings.soundFeedback ?? true}
+                onCheckedChange={(checked) => setSettings(s => ({ ...s, soundFeedback: checked }))}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="board" className="mt-4 space-y-6">
             <div className="space-y-2">
               <Label>Tile size</Label>
               <div className="flex flex-wrap">
@@ -166,12 +284,12 @@ export function BoardSettingsDialog({
                 {tileBtn('md', 'Medium')}
                 {tileBtn('lg', 'Large')}
               </div>
-              <p className="text-xs text-muted-foreground">Small = more tiles, Large = easier to select</p>
+              <p className="text-xs text-muted-foreground">Large tiles are easier for eye tracking</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="gridColsMobile">Mobile columns</Label>
+                <Label>Mobile columns</Label>
                 <Select value={settings.gridColsMobile?.toString()} onValueChange={(value) => setSettings(s => ({ ...s, gridColsMobile: parseInt(value) as 2 | 3 | 4 | 5 }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select columns" />
@@ -186,8 +304,8 @@ export function BoardSettingsDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="gridColsDesktop">Desktop columns</Label>
-                <Select value={settings.gridColsDesktop?.toString()} onValueChange={(value) => setSettings(s => ({ ...s, gridColsDesktop: parseInt(value) as 2 | 3 | 4 | 5 }))}>
+                <Label>Desktop columns</Label>
+                <Select value={settings.gridColsDesktop?.toString()} onValueChange={(value) => setSettings(s => ({ ...s, gridColsDesktop: parseInt(value) as 2 | 3 | 4 | 5 | 6 }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select columns" />
                   </SelectTrigger>
@@ -196,6 +314,89 @@ export function BoardSettingsDialog({
                     <SelectItem value="3">3 columns</SelectItem>
                     <SelectItem value="4">4 columns</SelectItem>
                     <SelectItem value="5">5 columns</SelectItem>
+                    <SelectItem value="6">6 columns</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>High contrast mode</Label>
+                  <p className="text-xs text-muted-foreground">Better visibility for low vision users</p>
+                </div>
+                <Switch
+                  checked={settings.highContrast ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, highContrast: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Dark mode</Label>
+                  <p className="text-xs text-muted-foreground">Dark background theme</p>
+                </div>
+                <Switch
+                  checked={settings.darkMode ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, darkMode: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Show tile labels</Label>
+                  <p className="text-xs text-muted-foreground">Display text on tiles</p>
+                </div>
+                <Switch
+                  checked={settings.showLabels ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showLabels: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Show emojis</Label>
+                  <p className="text-xs text-muted-foreground">Display emoji icons</p>
+                </div>
+                <Switch
+                  checked={settings.showEmoji ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showEmoji: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Icons only mode</Label>
+                  <p className="text-xs text-muted-foreground">Hide text labels, show only icons</p>
+                </div>
+                <Switch
+                  checked={settings.showIconsOnly ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showIconsOnly: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Text only mode</Label>
+                  <p className="text-xs text-muted-foreground">Hide icons, show only text</p>
+                </div>
+                <Switch
+                  checked={settings.showTextOnly ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showTextOnly: checked }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tile border thickness</Label>
+                <Select value={settings.tileBorderThickness} onValueChange={(value) => setSettings(s => ({ ...s, tileBorderThickness: value as 'thin' | 'medium' | 'thick' }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="thin">Thin borders</SelectItem>
+                    <SelectItem value="medium">Medium borders</SelectItem>
+                    <SelectItem value="thick">Thick borders</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -204,8 +405,8 @@ export function BoardSettingsDialog({
 
           <TabsContent value="categories" className="mt-4 space-y-4">
             <div className="space-y-2">
-              <Label>Available Categories</Label>
-              <p className="text-sm text-muted-foreground">Enable or disable tile categories</p>
+              <Label>AAC Communication Categories</Label>
+              <p className="text-sm text-muted-foreground">Enable categories for this user's communication needs</p>
             </div>
             
             <div className="space-y-3">
@@ -232,38 +433,16 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="display" className="mt-4 space-y-6">
+          <TabsContent value="eyetrack" className="mt-4 space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label>High contrast mode</Label>
-                  <p className="text-xs text-muted-foreground">Better visibility for low vision users</p>
+                  <Label>Enable eye tracking</Label>
+                  <p className="text-xs text-muted-foreground">Use eyes to select tiles</p>
                 </div>
                 <Switch
-                  checked={settings.highContrast ?? false}
-                  onCheckedChange={(checked) => setSettings(s => ({ ...s, highContrast: checked }))}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Show tile labels</Label>
-                  <p className="text-xs text-muted-foreground">Display text labels on tiles</p>
-                </div>
-                <Switch
-                  checked={settings.showLabels ?? true}
-                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showLabels: checked }))}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Show emojis</Label>
-                  <p className="text-xs text-muted-foreground">Display emoji icons on tiles</p>
-                </div>
-                <Switch
-                  checked={settings.showEmoji ?? true}
-                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showEmoji: checked }))}
+                  checked={settings.eyeTrackingEnabled ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, eyeTrackingEnabled: checked }))}
                 />
               </div>
 
@@ -275,6 +454,168 @@ export function BoardSettingsDialog({
                 <Switch
                   checked={settings.showGazeDot ?? true}
                   onCheckedChange={(checked) => setSettings(s => ({ ...s, showGazeDot: checked }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fixationTime">Fixation time (ms)</Label>
+                <Input
+                  id="fixationTime"
+                  type="number"
+                  step={100}
+                  min={500}
+                  max={3000}
+                  value={settings.fixationTime}
+                  onChange={(e) => setSettings((s) => ({ ...s, fixationTime: Number(e.target.value) }))}
+                />
+                <p className="text-xs text-muted-foreground">How long to look before selecting (500-3000ms)</p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Dwell highlight</Label>
+                  <p className="text-xs text-muted-foreground">Highlight tiles while looking</p>
+                </div>
+                <Switch
+                  checked={settings.dwellHighlight ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, dwellHighlight: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Blink to select</Label>
+                  <p className="text-xs text-muted-foreground">Use blinking as selection method</p>
+                </div>
+                <Switch
+                  checked={settings.blinkToSelect ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, blinkToSelect: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Dual control mode</Label>
+                  <p className="text-xs text-muted-foreground">Allow both eye tracking and clicking</p>
+                </div>
+                <Switch
+                  checked={settings.dualControlMode ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, dualControlMode: checked }))}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="advanced" className="mt-4 space-y-6">
+            <div className="space-y-2">
+              <Label>AI & Smart Features</Label>
+              <p className="text-sm text-muted-foreground">Advanced features for enhanced communication</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Predictive suggestions</Label>
+                  <p className="text-xs text-muted-foreground">Show likely next words</p>
+                </div>
+                <Switch
+                  checked={settings.predictiveSuggestions ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, predictiveSuggestions: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Show communication history</Label>
+                  <p className="text-xs text-muted-foreground">Display recently used phrases</p>
+                </div>
+                <Switch
+                  checked={settings.showHistory ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showHistory: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Show favorites</Label>
+                  <p className="text-xs text-muted-foreground">Display favorite tiles and phrases</p>
+                </div>
+                <Switch
+                  checked={settings.showFavorites ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, showFavorites: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Contextual boards</Label>
+                  <p className="text-xs text-muted-foreground">Different boards for different situations</p>
+                </div>
+                <Switch
+                  checked={settings.contextualBoards ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, contextualBoards: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Adaptive layout</Label>
+                  <p className="text-xs text-muted-foreground">Automatically adjust based on usage</p>
+                </div>
+                <Switch
+                  checked={settings.adaptiveLayout ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, adaptiveLayout: checked }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Safety & Accessibility</Label>
+              <p className="text-sm text-muted-foreground">Protection and access controls</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Lock board layout</Label>
+                  <p className="text-xs text-muted-foreground">Prevent accidental changes</p>
+                </div>
+                <Switch
+                  checked={settings.lockLayout ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, lockLayout: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Safe mode</Label>
+                  <p className="text-xs text-muted-foreground">Prevent deletion of important tiles</p>
+                </div>
+                <Switch
+                  checked={settings.safeMode ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, safeMode: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Parental controls</Label>
+                  <p className="text-xs text-muted-foreground">Require supervision for changes</p>
+                </div>
+                <Switch
+                  checked={settings.parentalMode ?? false}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, parentalMode: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Offline mode</Label>
+                  <p className="text-xs text-muted-foreground">Work without internet connection</p>
+                </div>
+                <Switch
+                  checked={settings.offlineMode ?? true}
+                  onCheckedChange={(checked) => setSettings(s => ({ ...s, offlineMode: checked }))}
                 />
               </div>
             </div>
