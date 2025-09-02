@@ -8,7 +8,7 @@ type Props = {
 
 // Full-screen calibration overlay with proper step-by-step calibration
 export default function CalibrationOverlay({ open, onClose }: Props) {
-  const { state, startCalibration, cancelCalibration } = useEyeTracking();
+  const { state, startCalibration, cancelCalibration, gaze } = useEyeTracking();
   const [started, setStarted] = useState(false);
 
   // Close when calibration is complete
@@ -95,19 +95,32 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
             </div>
           </div>
 
-          {/* Calibration target dot */}
+          {/* Calibration target dot with progress ring */}
           {state.target && (
             <div
-              className="absolute w-8 h-8 rounded-full bg-blue-500 border-4 border-white shadow-lg animate-pulse"
-              style={{
-                left: state.target.x - 16,
-                top: state.target.y - 16,
-                transform: 'scale(1.2)',
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
-              }}
+              className="absolute"
+              style={{ left: state.target.x - 24, top: state.target.y - 24 }}
             >
-              <div className="absolute inset-2 rounded-full bg-white animate-ping" />
+              {/* Progress ring */}
+              <div
+                className="absolute w-12 h-12 rounded-full"
+                style={{
+                  background: `conic-gradient(rgba(255,255,255,0.9) ${(Math.round((state.holdPct || 0) * 100))}%, rgba(255,255,255,0.2) 0)`
+                }}
+              />
+              {/* Target */}
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-blue-500 border-4 border-white shadow-lg animate-pulse" />
+              </div>
             </div>
+          )}
+
+          {/* Live gaze reticle (red) */}
+          {gaze && (
+            <div
+              className="absolute w-3 h-3 bg-red-500 rounded-full pointer-events-none"
+              style={{ left: gaze.x - 6, top: gaze.y - 6, boxShadow: '0 0 8px rgba(239,68,68,0.7)' }}
+            />
           )}
 
           {/* Current status */}

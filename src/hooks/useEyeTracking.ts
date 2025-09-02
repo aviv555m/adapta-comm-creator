@@ -301,50 +301,64 @@ const startCalibration = async () => {
     console.log("Eye data detected, starting calibration");
     setState(s => ({ ...s, message: "Look at the dot and hold steady" }));
 
-    // cancel flag
-    let alive = true;
-    cancelCalibRef.current = () => { alive = false; };
+  // cancel flag
+  let alive = true;
+  cancelCalibRef.current = () => { alive = false; };
 
-    const perPointMs = 1600;     // hold gaze duration per point
-    const minSamples = 50;       // minimum samples per point
+  const perPointMs = 1400;     // required dwell time per point
+  const minSamples = 45;       // minimum samples per point
 
-    for (let i = 0; i < cp.length && alive; i++) {
-      console.log(`Calibrating point ${i + 1}/${cp.length}`);
-      
-      // collect samples while holding
-      const t0 = performance.now();
-      cp[i].samples = [];
-      while (performance.now() - t0 < perPointMs && alive) {
-        const elapsed = performance.now() - t0;
-        if (raw) cp[i].samples.push(raw);
-        const hp = clamp(elapsed / perPointMs, 0, 1);
+  for (let i = 0; i < cp.length && alive; i++) {
+    console.log(`Calibrating point ${i + 1}/${cp.length}`);
+
+    // Dwell-based collection near target
+    cp[i].samples = [];
+    let dwell = 0;
+    const radius = Math.max(70, Math.min(window.innerWidth, window.innerHeight) * 0.06);
+
+    while (alive && dwell < perPointMs) {
+      if (raw) {
+        const dx = raw.x - cp[i].tx;
+        const dy = raw.y - cp[i].ty;
+        const d = Math.hypot(dx, dy);
+        if (d <= radius) {
+          dwell += 16; // approximate frame step
+          cp[i].samples.push(raw);
+        } else {
+          // decay when moving away
+          dwell = Math.max(0, dwell - 48);
+        }
+        const hp = clamp(dwell / perPointMs, 0, 1);
         setState(s => ({ ...s, holdPct: hp }));
-        await sleep(8);
       }
-      // top-up if needed
-      while (cp[i].samples.length < minSamples && alive) {
-        if (raw) cp[i].samples.push(raw);
-        await sleep(8);
-      }
-
-      console.log(`Point ${i + 1} collected ${cp[i].samples.length} samples`);
-
-      // denoise and median
-      const kept = removeOutliersToPct(cp[i].samples, 0.8);
-      cp[i].median = robustMedianXY(kept);
-
-      // progress + next target
-      const nextIdx = i + 1;
-      setState(s => ({
-        ...s,
-        currentIndex: nextIdx,
-        progress01: nextIdx / cp.length,
-        holdPct: 0,
-        target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
-        message: nextIdx < cp.length ? "Look at the dot and hold steady" : "Finishing up...",
-      }));
-      await sleep(250);
+      await sleep(16);
     }
+
+    // ensure enough samples
+    const topUpUntil = performance.now() + 400;
+    while (cp[i].samples.length < minSamples && performance.now() < topUpUntil && alive) {
+      if (raw) cp[i].samples.push(raw);
+      await sleep(8);
+    }
+
+    console.log(`Point ${i + 1} collected ${cp[i].samples.length} samples`);
+
+    // denoise and median
+    const kept = removeOutliersToPct(cp[i].samples, 0.8);
+    cp[i].median = robustMedianXY(kept);
+
+    // progress + next target
+    const nextIdx = i + 1;
+    setState(s => ({
+      ...s,
+      currentIndex: nextIdx,
+      progress01: nextIdx / cp.length,
+      holdPct: 0,
+      target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
+      message: nextIdx < cp.length ? "Align the red dot over the blue target and hold" : "Finishing up...",
+    }));
+    await sleep(250);
+  }
 
     if (!alive) {
       setState(s => ({ ...s, isCalibrating: false, message: "Calibration canceled", holdPct: 0 }));
