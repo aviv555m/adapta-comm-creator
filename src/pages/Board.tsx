@@ -135,15 +135,15 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
   };
 
 // Calculate tile size based on 1-10 scale where 10 = 2.5x larger than base
-const baseTileHeight = 80; // base height in pixels
+const baseTileHeight = 120; // larger base height for very big buttons
 const tileSizeValue = typeof settings.tileSize === 'number' ? settings.tileSize : 5;
 const scaleFactor = 1 + ((tileSizeValue - 5) * 0.3); // Scale from 0.4 to 2.5
 const calculatedHeight = Math.round(baseTileHeight * scaleFactor);
 const tileHeightStyle = { height: `${calculatedHeight}px` };
 
-// Grid columns from settings (safelisted)
-const gridMobileClass = (settings.gridColsMobile || 2) === 2 ? 'grid-cols-2' : (settings.gridColsMobile || 2) === 3 ? 'grid-cols-3' : (settings.gridColsMobile || 2) === 4 ? 'grid-cols-4' : 'grid-cols-5';
-const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' : (settings.gridColsDesktop || 3) === 3 ? 'grid-cols-3' : (settings.gridColsDesktop || 3) === 4 ? 'grid-cols-4' : 'grid-cols-5';
+// Force 3 columns layout for very big buttons
+const gridMobileClass = 'grid-cols-3';
+const gridDesktopClass = 'grid-cols-3';
 
   return (
     <div className="app-container">
@@ -300,10 +300,10 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
                         title={translatedText}
                       >
                         {settings.showEmoji !== false && tile.emoji && (
-                          <span className="text-4xl mb-1">{tile.emoji}</span>
+                          <span className="text-8xl mb-2">{tile.emoji}</span>
                         )}
                         {settings.showLabels !== false && (
-                          <span className="text-xs font-medium leading-tight">{translatedText}</span>
+                          <span className="text-xs font-medium leading-tight opacity-75">{translatedText}</span>
                         )}
                       </Button>
                     );

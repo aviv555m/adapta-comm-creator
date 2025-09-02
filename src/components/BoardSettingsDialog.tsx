@@ -119,12 +119,63 @@ const BoardSettingsDialog = ({ open, onOpenChange, initialSettings, initialProfi
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4">
-                <Label>High Contrast</Label>
-                <Switch
-                  checked={settings.highContrast || false}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, highContrast: checked }))}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Label>High Contrast</Label>
+                  <Switch
+                    checked={settings.highContrast || false}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, highContrast: checked }))}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label>Show Labels</Label>
+                  <Switch
+                    checked={settings.showLabels !== false}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, showLabels: checked }))}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label>Show Emoji</Label>
+                  <Switch
+                    checked={settings.showEmoji !== false}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, showEmoji: checked }))}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label>Show Gaze Dot</Label>
+                  <Switch
+                    checked={settings.showGazeDot !== false}
+                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, showGazeDot: checked }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Categories Settings */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Categories Settings</h3>
+              <div className="space-y-2">
+                <Label>Enabled Categories (leave empty for all)</Label>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {allCategories.map((category) => (
+                    <div key={category} className="flex items-center space-x-2">
+                      <Switch
+                        checked={!settings.enabledCategories || settings.enabledCategories.includes(category)}
+                        onCheckedChange={(checked) => {
+                          const current = settings.enabledCategories || allCategories;
+                          if (checked) {
+                            const updated = [...current.filter(c => c !== category), category];
+                            setSettings(prev => ({ ...prev, enabledCategories: updated }));
+                          } else {
+                            const updated = current.filter(c => c !== category);
+                            setSettings(prev => ({ ...prev, enabledCategories: updated.length === 0 ? allCategories : updated }));
+                          }
+                        }}
+                      />
+                      <Label className="text-sm">{category}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
