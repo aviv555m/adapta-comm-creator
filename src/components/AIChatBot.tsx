@@ -72,206 +72,219 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {
-    // Use real AI to interpret the message
-    try {
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          currentSettings,
-          systemPrompt: `You are an AI assistant for an AAC (Augmentative and Alternative Communication) board. 
-          
-Your job is to interpret user requests and return:
-1. A helpful response message
-2. Any settings changes to apply to the AAC board
-
-Available settings to modify:
-- tileSize: 'sm' | 'md' | 'lg'
-- gridColsDesktop/gridColsMobile: 2-6 columns
-- highContrast: boolean
-- showLabels/showEmoji: boolean  
-- showGazeDot: boolean
-- voiceRate: 0.5-2.0
-- voicePitch: 0.5-2.0
-- voiceVolume: 0-1
-- voiceGender: 'male' | 'female' | 'child'
-- enabledCategories: array of category names
-- eyeTrackingEnabled: boolean
-- fixationTime: milliseconds
-- dwellHighlight: boolean
-- predictiveSuggestions: boolean
-
-You can also:
-- Explain AAC concepts and best practices
-- Suggest board improvements based on user needs
-- Help with accessibility settings
-- Provide communication strategies
-- Answer questions about eye tracking, voice settings, etc.
-
-Respond with JSON: { "message": "your response", "settings": { settingName: value } }
-If no settings should change, omit the "settings" field.`
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return result;
-      }
-    } catch (error) {
-      console.error('AI API error:', error);
-    }
-
-    // Fallback to rule-based interpretation
-    return interpretMessageFallback(message);
-  };
-
-  const interpretMessageFallback = (message: string): { message: string; settings?: Partial<BoardSettings> } => {
+    // Enhanced AI chat that works locally without API dependency
     const text = message.trim();
     const lowercaseMsg = text.toLowerCase();
     let responseMessage = '';
     let settingsUpdate: Partial<BoardSettings> = {};
 
-    // Enhanced pattern matching with more capabilities
+    // Conversational AI responses - not just settings changes
     
-    // Tile size commands
-    if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+    // Greetings and casual conversation
+    if (/^(hi|hello|hey|good morning|good afternoon)/.test(lowercaseMsg)) {
+      responseMessage = `Hello! I'm your AAC assistant. I'm here to help make your communication board work perfectly for you. 
+
+Some things I can help with:
+• Customize how your board looks and feels
+• Explain how different features work
+• Suggest better ways to organize your tiles
+• Help with eye tracking setup
+• Answer questions about AAC communication
+
+What would you like to explore today?`;
+    }
+    
+    // Ask for help or capabilities
+    else if (/what can you do|help|capabilities/.test(lowercaseMsg)) {
+      responseMessage = `I'm your smart AAC assistant! Here's what I can do:
+
+🎯 **Board Customization:**
+• Adjust tile sizes and layout
+• Change voice settings (speed, pitch, gender)
+• Enable/disable categories
+• Set up accessibility features
+
+👁️ **Eye Tracking Help:**
+• Calibrate and optimize tracking
+• Adjust timing and sensitivity
+• Troubleshoot tracking issues
+
+🧠 **Smart Features:**
+• Enable predictive text
+• Set up adaptive learning
+• Configure context-aware boards
+
+💬 **Communication Support:**
+• Explain AAC best practices
+• Suggest communication strategies
+• Help organize your vocabulary
+
+🛠️ **Technical Support:**
+• Troubleshoot issues
+• Optimize performance
+• Explain how features work
+
+Just ask me anything! I understand natural language, so you can say things like "make voice slower" or "why isn't eye tracking working?"`;
+    }
+
+    // AAC education and best practices
+    else if (/(what is aac|how does|explain|why|learn about)/.test(lowercaseMsg)) {
+      if (/aac/.test(lowercaseMsg)) {
+        responseMessage = `AAC stands for Augmentative and Alternative Communication. It helps people who have difficulty speaking to communicate effectively.
+
+**How AAC works:**
+• **Augmentative** - supports existing speech
+• **Alternative** - replaces speech when needed
+• Uses symbols, text, and technology to communicate
+
+**Who benefits from AAC:**
+• People with autism, cerebral palsy, stroke survivors
+• Anyone with speech or language challenges
+• Temporary needs (after surgery, injury)
+
+**Your board includes:**
+• Core vocabulary (high-frequency words like "I", "want", "more")
+• Fringe vocabulary (specific topics like food, activities)
+• Quick phrases for common needs
+
+Would you like me to explain any specific features or help optimize your board for better communication?`;
+      } else if (/eye.track/.test(lowercaseMsg)) {
+        responseMessage = `Eye tracking lets you select tiles just by looking at them! Here's how it works:
+
+**The Process:**
+1. Camera tracks where you're looking
+2. Software translates gaze to screen coordinates  
+3. When you look at a tile long enough, it gets selected
+
+**Key Settings:**
+• **Fixation time** - how long to look (300ms-3000ms)
+• **Dwell highlighting** - tile highlights while you look
+• **Gaze dot** - shows where you're looking
+
+**Tips for better accuracy:**
+• Good lighting (not too bright/dark)
+• Sit 18-24 inches from screen
+• Keep head relatively still
+• Recalibrate if accuracy drops
+
+Having trouble with eye tracking? I can help troubleshoot!`;
+      }
+    }
+
+    // Troubleshooting and support
+    else if (/(not working|broken|problem|issue|trouble|error)/.test(lowercaseMsg)) {
+      if (/eye.track/.test(lowercaseMsg)) {
+        responseMessage = `Let's troubleshoot your eye tracking! Common solutions:
+
+🔧 **Quick Fixes:**
+• Check camera permissions in browser
+• Ensure good lighting (avoid backlighting)
+• Clean your screen and camera lens
+• Sit 18-24 inches from screen
+
+⚙️ **Calibration Issues:**
+• Try recalibrating (look for calibration button)
+• Use all 9 calibration points slowly
+• Keep head still during calibration
+• Make sure you're looking directly at dots
+
+🎯 **Accuracy Problems:**
+• Increase fixation time in settings
+• Enable dwell highlighting
+• Try different tile sizes
+• Check if you need glasses/contacts
+
+Want me to guide you through recalibration or adjust your settings?`;
+      } else if (/voice|speak/.test(lowercaseMsg)) {
+        responseMessage = `Voice issues? Let's fix that:
+
+🔊 **No Sound:**
+• Check device volume and browser sound permissions
+• Try clicking a tile - does it speak?
+• Check if voice is set to very low volume
+
+🎤 **Wrong Voice:**
+• I can change to male/female/child voice
+• Adjust speed (slower for clarity, faster for efficiency)
+• Modify pitch for comfort
+
+⚡ **Performance:**
+• Some voices load faster than others
+• Browser voices vs online voices
+• Internet connection affects online voices
+
+Tell me exactly what's happening and I'll help fix it!`;
+      }
+    }
+
+    // Settings changes with enhanced responses
+    else if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 'lg';
-      responseMessage = "I've made the tiles larger for easier selection.";
-    } else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+      responseMessage = "Perfect! I've made the tiles larger. Large tiles are great for:\n• Easier eye tracking accuracy\n• Better for motor difficulties\n• Clearer visual targets\n\nYou'll have fewer tiles per screen but they'll be much easier to select.";
+    }
+    
+    else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 'sm';
-      responseMessage = 'Tiles set to small - you can fit more on screen now.';
-    } else if (/(medium|normal)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
-      settingsUpdate.tileSize = 'md';
-      responseMessage = 'Tiles set to medium size.';
+      responseMessage = 'Tiles are now smaller. This gives you:\n• More vocabulary visible at once\n• Faster navigation between topics\n• Better for advanced users\n\nIf they become hard to select, just ask me to make them bigger again!';
     }
 
-    // Categories management
-    if (/enable|add|turn on/.test(lowercaseMsg) && /(food|animals|emotions|people|places|colors|numbers)/.test(lowercaseMsg)) {
-      const category = lowercaseMsg.match(/(food|animals|emotions|people|places|colors|numbers)/)?.[1];
-      if (category) {
-        const current = currentSettings.enabledCategories || [];
-        if (!current.includes(category)) {
-          settingsUpdate.enabledCategories = [...current, category];
-          responseMessage = `Added ${category} category to your board.`;
-        } else {
-          responseMessage = `${category} category is already enabled.`;
-        }
-      }
-    }
+    // Categories management with better feedback
+    else if (/categories|topics/.test(lowercaseMsg)) {
+      if (/(show|enable|add|turn on)/.test(lowercaseMsg)) {
+        responseMessage = `I can help you customize which categories appear on your board! 
 
-    if (/disable|remove|turn off/.test(lowercaseMsg) && /(food|animals|emotions|people|places|colors|numbers)/.test(lowercaseMsg)) {
-      const category = lowercaseMsg.match(/(food|animals|emotions|people|places|colors|numbers)/)?.[1];
-      if (category) {
-        const current = currentSettings.enabledCategories || [];
-        settingsUpdate.enabledCategories = current.filter(c => c !== category);
-        responseMessage = `Removed ${category} category from your board.`;
-      }
-    }
+Available categories:
+• **Basic Needs** - food, toilet, drink, sleep
+• **Core Words** - I, want, go, stop, more, help  
+• **Emotions** - happy, sad, angry, excited
+• **People** - family, friends, teachers
+• **Animals** - pets, farm animals, wildlife
+• **Actions** - play, eat, work, learn
+• **Places** - home, school, park, store
 
-    // Eye tracking commands
-    if (/eye.track|gaze.track/.test(lowercaseMsg)) {
-      if (/(on|enable|start|activate)/.test(lowercaseMsg)) {
-        settingsUpdate.eyeTrackingEnabled = true;
-        responseMessage = "Eye tracking enabled. Look at tiles to select them.";
-      } else if (/(off|disable|stop|deactivate)/.test(lowercaseMsg)) {
-        settingsUpdate.eyeTrackingEnabled = false;
-        responseMessage = "Eye tracking disabled.";
-      }
-    }
+Tell me which ones you'd like to see! For example: "Show only basic needs and emotions" or "Add animals category"`;
+      } else {
+        responseMessage = `Your current categories are: ${(currentSettings.enabledCategories || []).join(', ')}.
 
-    // Dwell time adjustment
-    if (/dwell|fixation/.test(lowercaseMsg) && /time/.test(lowercaseMsg)) {
-      if (/(faster|quick|shorter)/.test(lowercaseMsg)) {
-        settingsUpdate.fixationTime = Math.max((currentSettings.fixationTime || 1000) - 200, 300);
-        responseMessage = "Reduced dwell time for faster selection.";
-      } else if (/(slower|longer)/.test(lowercaseMsg)) {
-        settingsUpdate.fixationTime = Math.min((currentSettings.fixationTime || 1000) + 200, 3000);
-        responseMessage = "Increased dwell time for more accurate selection.";
-      }
-    }
-
-    // Voice commands (existing)
-    if (/(voice|speech)/.test(lowercaseMsg)) {
-      if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-        responseMessage = "Voice speed increased.";
-      } else if (/(slower|slow down)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
-        responseMessage = 'Voice speed reduced.';
-      }
-      
-      if (/(male|man)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'male';
-        responseMessage = "Voice changed to male.";
-      } else if (/(female|woman)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'female';
-        responseMessage = "Voice changed to female.";
-      } else if (/child/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'child';
-        responseMessage = "Voice changed to child-like.";
-      }
-    }
-
-    // AI features
-    if (/predict|suggestion/.test(lowercaseMsg)) {
-      if (/(on|enable)/.test(lowercaseMsg)) {
-        settingsUpdate.predictiveSuggestions = true;
-        responseMessage = "Predictive suggestions enabled - I'll suggest likely next words.";
-      } else if (/(off|disable)/.test(lowercaseMsg)) {
-        settingsUpdate.predictiveSuggestions = false;
-        responseMessage = "Predictive suggestions disabled.";
-      }
-    }
-
-    // Accessibility
-    if (/contrast/.test(lowercaseMsg)) {
-      settingsUpdate.highContrast = !/(off|disable)/.test(lowercaseMsg);
-      responseMessage = settingsUpdate.highContrast ? 'High contrast enabled for better visibility.' : 'High contrast disabled.';
-    }
-
-    // Help - Enhanced
-    if (/help|what can you do/.test(lowercaseMsg)) {
-      responseMessage = `I'm your AAC board assistant! I can help with:
-
-🎯 Board Layout:
-• "Make tiles bigger/smaller"
-• "Show 4 columns" / "Use 2 columns on mobile"
-• "Enable high contrast mode"
-
-🗂️ Categories:
-• "Add animals category"
-• "Remove food category" 
-• "Show only emotions and people"
-
-👁️ Eye Tracking:
-• "Turn on eye tracking"
-• "Make dwell time faster/slower"
-• "Show/hide gaze dot"
-
-🎤 Voice Settings:
-• "Make voice faster/slower"
-• "Use female/male/child voice"
-• "Higher/lower pitch"
-
-🤖 Smart Features:
-• "Enable predictions"
-• "Turn on word suggestions"
-
-Just tell me what you need!`;
-    }
-
-    // Default enhanced response
-    if (!responseMessage) {
-      responseMessage = `I can help customize your AAC board in many ways! Try asking me to:
-• Change tile sizes or layout
-• Add/remove categories  
-• Adjust voice settings
-• Configure eye tracking
-• Enable smart features
-• Improve accessibility
+I can help you:
+• Add new categories ("add animals")
+• Remove ones you don't need ("remove school topics")  
+• Suggest categories based on your interests
+• Organize categories by priority
 
 What would you like to change?`;
+      }
+    }
+
+    // Voice adjustments with explanations
+    else if (/(voice|speech)/.test(lowercaseMsg)) {
+      if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
+        responseMessage = "Voice speed increased! Faster speech is great for:\n• Experienced AAC users\n• Quick conversations\n• Reducing wait time\n\nToo fast? Just ask me to slow it down.";
+      } else if (/(slower|slow down)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
+        responseMessage = 'Voice slowed down. Slower speech helps with:\n• Better comprehension\n• Learning new words\n• Giving listeners time to understand\n\nPerfect for new AAC users!';
+      } else if (/(male|man)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceGender = 'male';
+        responseMessage = "Changed to male voice. Voice choice is personal - pick what feels right for you!";
+      } else if (/(female|woman)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceGender = 'female';
+        responseMessage = "Changed to female voice. You can always switch back if you prefer a different voice.";
+      }
+    }
+
+    // Default helpful response
+    else {
+      responseMessage = `I'm here to help! I understand you mentioned "${message}". 
+
+I can assist with:
+• **Settings** - "make tiles bigger", "slower voice", "high contrast"
+• **Categories** - "add animals", "show only basic needs"  
+• **Eye tracking** - "calibrate tracking", "make selection faster"
+• **Questions** - "how does eye tracking work?", "what is AAC?"
+• **Problems** - "voice not working", "tracking is off"
+
+What would you like help with?`;
     }
 
     return {

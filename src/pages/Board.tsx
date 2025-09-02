@@ -63,12 +63,29 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
   const boardConfig = generateBoardConfig();
   const categories = boardConfig.categories;
   
-  // Filter tiles by current category
-  const filteredTiles = currentCategory === 'All' 
-    ? boardConfig.tiles 
-    : currentCategory === 'Most Used'
-    ? getMostUsedTiles(boardConfig.tiles, 12)
-    : boardConfig.tiles.filter(tile => tile.category === currentCategory);
+  // Filter tiles by current category and enabled categories from settings
+  const filteredTiles = (() => {
+    let tiles = boardConfig.tiles;
+    
+    // First, filter by enabled categories if specified in settings
+    if (settings.enabledCategories && settings.enabledCategories.length > 0) {
+      tiles = tiles.filter(tile => settings.enabledCategories!.includes(tile.category));
+    }
+    
+    // Then filter by current category selection
+    if (currentCategory === 'All') {
+      return tiles;
+    } else if (currentCategory === 'Most Used') {
+      return getMostUsedTiles(tiles, 12);
+    } else {
+      return tiles.filter(tile => tile.category === currentCategory);
+    }
+  })();
+
+  // Filter available categories based on enabled categories from settings
+  const availableCategories = settings.enabledCategories && settings.enabledCategories.length > 0
+    ? categories.filter(cat => settings.enabledCategories!.includes(cat))
+    : categories;
 
   // Get user preferences for display
   const getCommunicationStyle = () => {
@@ -205,20 +222,21 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
                     onClick={() => setCurrentCategory('All')}
                   >
                     <span className="mr-2">🌐</span> All
-                  </Button>
-                  {categories.map((category) => (
-                    <Button
-                      key={category}
-                      variant={currentCategory === category ? 'default' : 'outline'}
-                      className="w-full justify-start text-left"
-                      onClick={() => setCurrentCategory(category)}
-                    >
-                      <span className="mr-2">
-                        {getCategoryEmoji(category)}
-                      </span>
-                      {category}
-                    </Button>
-                  ))}
+                   </Button>
+                   {/* Filter available categories based on enabled categories from settings */}
+                   {availableCategories.map((category) => (
+                     <Button
+                       key={category}
+                       variant={currentCategory === category ? 'default' : 'outline'}
+                       className="w-full justify-start text-left"
+                       onClick={() => setCurrentCategory(category)}
+                     >
+                       <span className="mr-2">
+                         {getCategoryEmoji(category)}
+                       </span>
+                       {category}
+                     </Button>
+                   ))}
                 </div>
               </CardContent>
             </Card>
