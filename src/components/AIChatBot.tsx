@@ -46,8 +46,9 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
     
     setMessages(prev => [...prev, userMessage]);
     
-    // Process the message and determine what changes to make
-    const response = await interpretMessage(message);
+    try {
+      // Process the message and determine what changes to make
+      const response = await interpretMessage(message);
     
     // Add AI response
     const aiMessage: Message = {
@@ -69,6 +70,17 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
     }
     
     setIsProcessing(false);
+    } catch (error) {
+      console.error('AI processing error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I encountered an error processing your message. Please try again.",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setIsProcessing(false);
+    }
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {

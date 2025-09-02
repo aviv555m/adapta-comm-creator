@@ -225,28 +225,39 @@ const gridDesktopClass = 'grid-cols-3';
                 <CardTitle className="text-lg">{t('categories')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-3">
                   <Button
-                    variant={currentCategory === 'All' ? 'default' : 'outline'}
-                    className="w-full justify-start"
+                    variant="outline"
+                    className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
+                      currentCategory === 'All' 
+                        ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                        : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                    }`}
+                    style={tileHeightStyle}
                     onClick={() => setCurrentCategory('All')}
                   >
-                    <span className="mr-2">🌐</span> {t('all')}
-                   </Button>
-                   {/* Filter available categories based on enabled categories from settings */}
-                   {availableCategories.map((category) => (
-                     <Button
-                       key={category}
-                       variant={currentCategory === category ? 'default' : 'outline'}
-                       className="w-full justify-start text-left"
-                       onClick={() => setCurrentCategory(category)}
-                     >
-                       <span className="mr-2">
-                         {getCategoryEmoji(category)}
-                       </span>
-                       {t('categoryNames', category)}
-                     </Button>
-                   ))}
+                    <span className="text-8xl mb-2 leading-none">🌐</span>
+                    <span className="text-[10px] font-medium leading-tight opacity-80">{t('all')}</span>
+                  </Button>
+                  {/* Filter available categories based on enabled categories from settings */}
+                  {availableCategories.map((category) => (
+                    <Button
+                      key={category}
+                      variant="outline"
+                      className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
+                        currentCategory === category 
+                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                      }`}
+                      style={tileHeightStyle}
+                      onClick={() => setCurrentCategory(category)}
+                    >
+                      <span className="text-8xl mb-2 leading-none">
+                        {getCategoryEmoji(category)}
+                      </span>
+                      <span className="text-[10px] font-medium leading-tight opacity-80">{t('categoryNames', category)}</span>
+                    </Button>
+                  ))}
                 </div>
               </CardContent>
             </Card>
