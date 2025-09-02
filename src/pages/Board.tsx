@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Mic, RotateCcw, Volume2, Eye, EyeOff } from 'lucide-react';
+import { Settings, Mic, RotateCcw, Volume2, Eye, EyeOff, Languages } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,11 +14,13 @@ import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
 import { BoardTile } from '@/types/board';
 import { AIChatBot } from '@/components/AIChatBot';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const Board = () => {
   const navigate = useNavigate();
   const { questions, resetQuiz } = useQuiz();
   const { toast } = useToast();
+  const { language, t } = useLanguage();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
   const [currentCategory, setCurrentCategory] = useState('Most Used');
   
@@ -41,7 +43,7 @@ const Board = () => {
 const [settings, setSettings] = useState<BoardSettings>(() => {
   const s = localStorage.getItem('echoes_board_settings');
   const parsed = s ? JSON.parse(s) : {};
-  return { voiceRate: 1, voicePitch: 1, tileSize: 'md', gridColsMobile: 2, gridColsDesktop: 3, highContrast: false, showLabels: true, showEmoji: true, showGazeDot: true, ...parsed } as BoardSettings;
+  return { voiceRate: 1, voicePitch: 1, tileSize: 5, gridColsMobile: 2, gridColsDesktop: 3, highContrast: false, showLabels: true, showEmoji: true, showGazeDot: true, ollamaUrl: 'http://localhost:11434', ollamaModel: 'llama3.2', ...parsed } as BoardSettings;
 });
   const [profile, setProfile] = useState<ProfileData>(() => {
     const p = localStorage.getItem('echoes_profile');
@@ -104,13 +106,15 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = settings.voiceRate ?? 1;
     utterance.pitch = settings.voicePitch ?? 1;
+    utterance.lang = language === 'he' ? 'he-IL' : 'en-US';
     speechSynthesis.speak(utterance);
   };
 
   const handleTileClick = (tile: BoardTile) => {
     setSelectedTile(tile);
     trackTileUsage(tile.id);
-    speakText(tile.text);
+    const translatedText = t('boardData', tile.text) || tile.text;
+    speakText(translatedText);
   };
 
   const handleEyeTrackingToggle = async () => {
@@ -130,8 +134,12 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     }
   };
 
-const tileHeightClass =
-  settings.tileSize === 'sm' ? 'h-16' : settings.tileSize === 'lg' ? 'h-24' : 'h-20';
+// Calculate tile size based on 1-10 scale where 10 = 2.5x larger than base
+const baseTileHeight = 80; // base height in pixels
+const tileSizeValue = typeof settings.tileSize === 'number' ? settings.tileSize : 5;
+const scaleFactor = 1 + ((tileSizeValue - 5) * 0.3); // Scale from 0.4 to 2.5
+const calculatedHeight = Math.round(baseTileHeight * scaleFactor);
+const tileHeightStyle = { height: `${calculatedHeight}px` };
 
 // Grid columns from settings (safelisted)
 const gridMobileClass = (settings.gridColsMobile || 2) === 2 ? 'grid-cols-2' : (settings.gridColsMobile || 2) === 3 ? 'grid-cols-3' : (settings.gridColsMobile || 2) === 4 ? 'grid-cols-4' : 'grid-cols-5';
@@ -155,28 +163,29 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
             >
               <span className="mr-1">⚙️</span>
               <Settings className="h-4 w-4 mr-1" />
-              Settings
+              {t('settings')}
             </Button>
             <Button
               variant="default"
               className="bg-purple-600 text-white hover:bg-purple-700"
               onClick={() =>
                 toast({
-                  title: 'AI Adapt',
+                  title: t('aiAdapt'),
                   description: '🤖 Coming soon: auto-tune your board based on usage.',
                 })
               }
             >
               <span className="mr-1">🤖</span>
               <Volume2 className="h-4 w-4 mr-1" />
-              AI Adapt
+              {t('aiAdapt')}
             </Button>
             <Button
               variant="default"
               className="bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
                 if (selectedTile) {
-                  speakText(selectedTile.text);
+                  const translatedText = t('boardData', selectedTile.text) || selectedTile.text;
+                  speakText(translatedText);
                 } else {
                   toast({
                     title: 'No tile selected',
@@ -187,7 +196,7 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
             >
               <span className="mr-1">▶️</span>
               <Mic className="h-4 w-4 mr-1" />
-              Ready
+              {t('ready')}
             </Button>
             <Button
               variant="default"
@@ -202,7 +211,7 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
             >
               <span className="mr-1">👁️</span>
               {active ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-              {state.isCalibrating ? 'Calibrating...' : active ? 'Eye Off' : 'Eye Track'}
+              {state.isCalibrating ? t('calibrating') : active ? t('eyeOff') : t('eyeTrack')}
             </Button>
           </div>
         </div>
@@ -212,7 +221,7 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Categories</CardTitle>
+                <CardTitle className="text-lg">{t('categories')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -221,7 +230,7 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
                     className="w-full justify-start"
                     onClick={() => setCurrentCategory('All')}
                   >
-                    <span className="mr-2">🌐</span> All
+                    <span className="mr-2">🌐</span> {t('all')}
                    </Button>
                    {/* Filter available categories based on enabled categories from settings */}
                    {availableCategories.map((category) => (
@@ -234,7 +243,7 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
                        <span className="mr-2">
                          {getCategoryEmoji(category)}
                        </span>
-                       {category}
+                       {t('categoryNames', category)}
                      </Button>
                    ))}
                 </div>
@@ -244,21 +253,21 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
             {/* User Info Panel */}
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="text-lg">Profile</CardTitle>
+                <CardTitle className="text-lg">{t('profile')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {profile.name ? (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('name')}</p>
                     <p className="text-sm">{profile.name}</p>
                   </div>
                 ) : null}
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Communication Style</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('communicationStyle')}</p>
                   <p className="text-sm">{getCommunicationStyle()}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Interests</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('interests')}</p>
                   <p className="text-sm">{getUserInterests()}</p>
                 </div>
               </CardContent>
@@ -270,31 +279,35 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {currentCategory === 'All' ? 'All Categories' : currentCategory}
+                  {currentCategory === 'All' ? t('all') + ' Categories' : t('categoryNames', currentCategory)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className={`grid ${gridMobileClass} md:${gridDesktopClass} gap-3`}>
-                  {filteredTiles.map((tile) => (
-                    <Button
-                      key={tile.id}
-                      variant="outline"
-                      className={`p-4 text-center whitespace-normal text-wrap border-2 transition-all ${tileHeightClass} ${
-                        selectedTile?.id === tile.id 
-                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-green-400 bg-green-50')
-                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-gray-200 hover:border-primary hover:bg-accent')
-                      }`}
-                      onClick={() => handleTileClick(tile)}
-                      title={tile.text}
-                    >
-                      {settings.showEmoji !== false && tile.emoji && (
-                        <span className="text-lg mr-2">{tile.emoji}</span>
-                      )}
-                      {settings.showLabels !== false && (
-                        <span className="text-sm font-medium">{tile.text}</span>
-                      )}
-                    </Button>
-                  ))}
+                  {filteredTiles.map((tile) => {
+                    const translatedText = t('boardData', tile.text) || tile.text;
+                    return (
+                      <Button
+                        key={tile.id}
+                        variant="outline"
+                        className={`p-4 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
+                          selectedTile?.id === tile.id 
+                            ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-green-400 bg-green-50')
+                            : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-gray-200 hover:border-primary hover:bg-accent')
+                        }`}
+                        style={tileHeightStyle}
+                        onClick={() => handleTileClick(tile)}
+                        title={translatedText}
+                      >
+                        {settings.showEmoji !== false && tile.emoji && (
+                          <span className="text-4xl mb-1">{tile.emoji}</span>
+                        )}
+                        {settings.showLabels !== false && (
+                          <span className="text-xs font-medium leading-tight">{translatedText}</span>
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
 
                 {filteredTiles.length === 0 && (
@@ -310,13 +323,13 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
               <Card className="mt-4">
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-lg font-medium mb-2">Currently Selected:</p>
+                    <p className="text-lg font-medium mb-2">{t('currentlySelected')}</p>
                     <p className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
                       {selectedTile.emoji && <span>{selectedTile.emoji}</span>}
-                      <span>{selectedTile.text}</span>
+                      <span>{t('boardData', selectedTile.text) || selectedTile.text}</span>
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Category: {selectedTile.category}
+                      {t('category')} {t('categoryNames', selectedTile.category)}
                     </p>
                   </div>
                 </CardContent>
@@ -334,11 +347,11 @@ const gridDesktopClass = (settings.gridColsDesktop || 3) === 2 ? 'grid-cols-2' :
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             <span className="mr-1">🔄</span>
-            New Setup
+            {t('newSetup')}
           </Button>
           
           <div className="text-sm text-muted-foreground">
-            Generated from your quiz responses • {boardConfig.tiles.length} tiles available
+            {t('generatedFromQuiz')} • {boardConfig.tiles.length} {t('tilesAvailable')}
           </div>
         </div>
 

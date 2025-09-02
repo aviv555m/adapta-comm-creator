@@ -219,12 +219,12 @@ Tell me exactly what's happening and I'll help fix it!`;
 
     // Settings changes with enhanced responses
     else if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
-      settingsUpdate.tileSize = 'lg';
+      settingsUpdate.tileSize = 8;
       responseMessage = "Perfect! I've made the tiles larger. Large tiles are great for:\n• Easier eye tracking accuracy\n• Better for motor difficulties\n• Clearer visual targets\n\nYou'll have fewer tiles per screen but they'll be much easier to select.";
     }
     
     else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
-      settingsUpdate.tileSize = 'sm';
+      settingsUpdate.tileSize = 3;
       responseMessage = 'Tiles are now smaller. This gives you:\n• More vocabulary visible at once\n• Faster navigation between topics\n• Better for advanced users\n\nIf they become hard to select, just ask me to make them bigger again!';
     }
 
@@ -265,11 +265,9 @@ What would you like to change?`;
         settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
         responseMessage = 'Voice slowed down. Slower speech helps with:\n• Better comprehension\n• Learning new words\n• Giving listeners time to understand\n\nPerfect for new AAC users!';
       } else if (/(male|man)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'male';
-        responseMessage = "Changed to male voice. Voice choice is personal - pick what feels right for you!";
+        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
       } else if (/(female|woman)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'female';
-        responseMessage = "Changed to female voice. You can always switch back if you prefer a different voice.";
+        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
       }
     }
 
