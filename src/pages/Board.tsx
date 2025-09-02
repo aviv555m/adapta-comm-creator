@@ -218,52 +218,10 @@ const gridDesktopClass = 'grid-cols-3';
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Categories */}
+          {/* Sidebar - User Info Only */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t('categories')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button
-                    variant="outline"
-                    className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
-                      currentCategory === 'All' 
-                        ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                        : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                    }`}
-                    style={tileHeightStyle}
-                    onClick={() => setCurrentCategory('All')}
-                  >
-                    <span className="text-8xl mb-2 leading-none">🌐</span>
-                    <span className="text-[10px] font-medium leading-tight opacity-80">{t('all')}</span>
-                  </Button>
-                  {/* Filter available categories based on enabled categories from settings */}
-                  {availableCategories.map((category) => (
-                    <Button
-                      key={category}
-                      variant="outline"
-                      className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
-                        currentCategory === category 
-                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                      }`}
-                      style={tileHeightStyle}
-                      onClick={() => setCurrentCategory(category)}
-                    >
-                      <span className="text-8xl mb-2 leading-none">
-                        {getCategoryEmoji(category)}
-                      </span>
-                      <span className="text-[10px] font-medium leading-tight opacity-80">{t('categoryNames', category)}</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* User Info Panel */}
-            <Card className="mt-4">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-lg">{t('profile')}</CardTitle>
               </CardHeader>
@@ -284,6 +242,21 @@ const gridDesktopClass = 'grid-cols-3';
                 </div>
               </CardContent>
             </Card>
+
+            {/* Back to Categories Button when viewing tiles */}
+            {currentCategory !== 'All' && (
+              <Card className="mt-4">
+                <CardContent className="p-4">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setCurrentCategory('All')}
+                  >
+                    ← {t('categories')}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Main Board Area */}
@@ -291,62 +264,67 @@ const gridDesktopClass = 'grid-cols-3';
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {currentCategory === 'All' ? t('all') + ' Categories' : t('categoryNames', currentCategory)}
+                  {currentCategory === 'All' ? t('categories') : t('categoryNames', currentCategory)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`grid grid-cols-3 md:grid-cols-3 gap-3`}>
-                  {filteredTiles.map((tile) => {
-                    const translatedText = t('boardData', tile.text) || tile.text;
-                    return (
-                      <Button
-                        key={tile.id}
-                        variant="outline"
-                        className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
-                          selectedTile?.id === tile.id 
-                            ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                            : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                        }`}
-                        style={tileHeightStyle}
-                        onClick={() => handleTileClick(tile)}
-                        title={translatedText}
-                      >
-                        {settings.showEmoji !== false && tile.emoji && (
-                          <span className="text-8xl mb-2 leading-none">{tile.emoji}</span>
-                        )}
-                        {settings.showLabels !== false && (
-                          <span className="text-[10px] font-medium leading-tight opacity-80">{translatedText}</span>
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                {filteredTiles.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No tiles in this category
+                {currentCategory === 'All' ? (
+                  // Show Categories as main tiles
+                  <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
+                    {availableCategories.map((category) => {
+                      const categoryName = t('categoryNames', category);
+                      return (
+                        <Button
+                          key={category}
+                          variant="outline"
+                          className="p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20"
+                          style={tileHeightStyle}
+                          onClick={() => {
+                            setCurrentCategory(category);
+                            speakText(categoryName);
+                            toast({ title: categoryName, description: 'Speaking now', duration: 1500 });
+                          }}
+                          title={categoryName}
+                        >
+                          <span className="text-8xl mb-2 leading-none">
+                            {getCategoryEmoji(category)}
+                          </span>
+                          <span className="text-[10px] font-medium leading-tight opacity-80">{categoryName}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Show Tiles for selected category
+                  <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
+                    {filteredTiles.map((tile) => {
+                      const translatedText = t('boardData', tile.text) || tile.text;
+                      return (
+                        <Button
+                          key={tile.id}
+                          variant="outline"
+                          className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
+                            selectedTile?.id === tile.id 
+                              ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                              : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                          }`}
+                          style={tileHeightStyle}
+                          onClick={() => handleTileClick(tile)}
+                          title={translatedText}
+                        >
+                          {settings.showEmoji !== false && tile.emoji && (
+                            <span className="text-8xl mb-2 leading-none">{tile.emoji}</span>
+                          )}
+                          {settings.showLabels !== false && (
+                            <span className="text-[10px] font-medium leading-tight opacity-80">{translatedText}</span>
+                          )}
+                        </Button>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Selected Tile Display */}
-            {selectedTile && (
-              <Card className="mt-4">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <p className="text-lg font-medium mb-2">{t('currentlySelected')}</p>
-                    <p className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                      {selectedTile.emoji && <span>{selectedTile.emoji}</span>}
-                      <span>{t('boardData', selectedTile.text) || selectedTile.text}</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {t('category')} {t('categoryNames', selectedTile.category)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
 
