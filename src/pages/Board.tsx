@@ -110,12 +110,13 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     speechSynthesis.speak(utterance);
   };
 
-  const handleTileClick = (tile: BoardTile) => {
-    setSelectedTile(tile);
-    trackTileUsage(tile.id);
-    const translatedText = t('boardData', tile.text) || tile.text;
-    speakText(translatedText);
-  };
+const handleTileClick = (tile: BoardTile) => {
+  setSelectedTile(tile);
+  trackTileUsage(tile.id);
+  const translatedText = t('boardData', tile.text) || tile.text;
+  speakText(translatedText);
+  toast({ title: translatedText, description: 'Speaking now', duration: 1500 });
+};
 
   const handleEyeTrackingToggle = async () => {
     if (active) {
@@ -135,7 +136,7 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
   };
 
 // Calculate tile size based on 1-10 scale where 10 = 2.5x larger than base
-const baseTileHeight = 120; // larger base height for very big buttons
+const baseTileHeight = 180; // very big buttons
 const tileSizeValue = typeof settings.tileSize === 'number' ? settings.tileSize : 5;
 const scaleFactor = 1 + ((tileSizeValue - 5) * 0.3); // Scale from 0.4 to 2.5
 const calculatedHeight = Math.round(baseTileHeight * scaleFactor);
@@ -283,27 +284,27 @@ const gridDesktopClass = 'grid-cols-3';
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`grid ${gridMobileClass} md:${gridDesktopClass} gap-3`}>
+                <div className={`grid grid-cols-3 md:grid-cols-3 gap-3`}>
                   {filteredTiles.map((tile) => {
                     const translatedText = t('boardData', tile.text) || tile.text;
                     return (
                       <Button
                         key={tile.id}
                         variant="outline"
-                        className={`p-4 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
+                        className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
                           selectedTile?.id === tile.id 
-                            ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-green-400 bg-green-50')
-                            : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-gray-200 hover:border-primary hover:bg-accent')
+                            ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                            : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
                         }`}
                         style={tileHeightStyle}
                         onClick={() => handleTileClick(tile)}
                         title={translatedText}
                       >
                         {settings.showEmoji !== false && tile.emoji && (
-                          <span className="text-8xl mb-2">{tile.emoji}</span>
+                          <span className="text-8xl mb-2 leading-none">{tile.emoji}</span>
                         )}
                         {settings.showLabels !== false && (
-                          <span className="text-xs font-medium leading-tight opacity-75">{translatedText}</span>
+                          <span className="text-[10px] font-medium leading-tight opacity-80">{translatedText}</span>
                         )}
                       </Button>
                     );
