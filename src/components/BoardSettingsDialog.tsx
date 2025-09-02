@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export type BoardSettings = {
   // Voice & Audio
@@ -168,12 +169,12 @@ export function BoardSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>AAC Settings</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="profile" className="mt-2">
+        <Tabs defaultValue="profile" className="mt-2 flex-1 overflow-hidden">
           <TabsList className="grid w-full grid-cols-6 text-xs">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="voice">Voice</TabsTrigger>
@@ -183,7 +184,8 @@ export function BoardSettingsDialog({
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile" className="mt-4 space-y-4">
+          <ScrollArea className="h-[400px] pr-3">
+            <TabsContent value="profile" className="mt-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Display name</Label>
               <Input
@@ -205,7 +207,7 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="voice" className="mt-4 space-y-6">
+            <TabsContent value="voice" className="mt-4 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="rate">Voice rate (speed)</Label>
@@ -276,7 +278,7 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="board" className="mt-4 space-y-6">
+            <TabsContent value="board" className="mt-4 space-y-6">
             <div className="space-y-2">
               <Label>Tile size</Label>
               <div className="flex flex-wrap">
@@ -403,7 +405,7 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-4 space-y-4">
+            <TabsContent value="categories" className="mt-4 space-y-4">
             <div className="space-y-2">
               <Label>AAC Communication Categories</Label>
               <p className="text-sm text-muted-foreground">Enable categories for this user's communication needs</p>
@@ -433,7 +435,7 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="eyetrack" className="mt-4 space-y-6">
+            <TabsContent value="eyetrack" className="mt-4 space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -506,7 +508,7 @@ export function BoardSettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="advanced" className="mt-4 space-y-6">
+            <TabsContent value="advanced" className="mt-4 space-y-6">
             <div className="space-y-2">
               <Label>AI & Smart Features</Label>
               <p className="text-sm text-muted-foreground">Advanced features for enhanced communication</p>
@@ -619,7 +621,8 @@ export function BoardSettingsDialog({
                 />
               </div>
             </div>
-          </TabsContent>
+            </TabsContent>
+          </ScrollArea>
         </Tabs>
 
         <DialogFooter className="mt-4">

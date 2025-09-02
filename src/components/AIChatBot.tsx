@@ -72,120 +72,206 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {
+    // Use real AI to interpret the message
+    try {
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          currentSettings,
+          systemPrompt: `You are an AI assistant for an AAC (Augmentative and Alternative Communication) board. 
+          
+Your job is to interpret user requests and return:
+1. A helpful response message
+2. Any settings changes to apply to the AAC board
+
+Available settings to modify:
+- tileSize: 'sm' | 'md' | 'lg'
+- gridColsDesktop/gridColsMobile: 2-6 columns
+- highContrast: boolean
+- showLabels/showEmoji: boolean  
+- showGazeDot: boolean
+- voiceRate: 0.5-2.0
+- voicePitch: 0.5-2.0
+- voiceVolume: 0-1
+- voiceGender: 'male' | 'female' | 'child'
+- enabledCategories: array of category names
+- eyeTrackingEnabled: boolean
+- fixationTime: milliseconds
+- dwellHighlight: boolean
+- predictiveSuggestions: boolean
+
+You can also:
+- Explain AAC concepts and best practices
+- Suggest board improvements based on user needs
+- Help with accessibility settings
+- Provide communication strategies
+- Answer questions about eye tracking, voice settings, etc.
+
+Respond with JSON: { "message": "your response", "settings": { settingName: value } }
+If no settings should change, omit the "settings" field.`
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result;
+      }
+    } catch (error) {
+      console.error('AI API error:', error);
+    }
+
+    // Fallback to rule-based interpretation
+    return interpretMessageFallback(message);
+  };
+
+  const interpretMessageFallback = (message: string): { message: string; settings?: Partial<BoardSettings> } => {
     const text = message.trim();
     const lowercaseMsg = text.toLowerCase();
     let responseMessage = '';
     let settingsUpdate: Partial<BoardSettings> = {};
 
+    // Enhanced pattern matching with more capabilities
+    
     // Tile size commands
     if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 'lg';
-      responseMessage = "I've made the tiles larger.";
+      responseMessage = "I've made the tiles larger for easier selection.";
     } else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 'sm';
-      responseMessage = 'Tiles set to small.';
+      responseMessage = 'Tiles set to small - you can fit more on screen now.';
     } else if (/(medium|normal)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 'md';
-      responseMessage = 'Tiles set to medium.';
+      responseMessage = 'Tiles set to medium size.';
     }
 
-    // Columns and layout density
-    const colsMatch = lowercaseMsg.match(/(\d+)\s*(col|column|columns)/);
-    if (colsMatch) {
-      const n = Math.max(2, Math.min(5, parseInt(colsMatch[1], 10)));
-      if (/mobile/.test(lowercaseMsg)) {
-        settingsUpdate.gridColsMobile = n as any;
-        responseMessage = `${n} columns on mobile set.`;
-      } else {
-        settingsUpdate.gridColsDesktop = n as any;
-        responseMessage = `${n} columns set.`;
+    // Categories management
+    if (/enable|add|turn on/.test(lowercaseMsg) && /(food|animals|emotions|people|places|colors|numbers)/.test(lowercaseMsg)) {
+      const category = lowercaseMsg.match(/(food|animals|emotions|people|places|colors|numbers)/)?.[1];
+      if (category) {
+        const current = currentSettings.enabledCategories || [];
+        if (!current.includes(category)) {
+          settingsUpdate.enabledCategories = [...current, category];
+          responseMessage = `Added ${category} category to your board.`;
+        } else {
+          responseMessage = `${category} category is already enabled.`;
+        }
       }
     }
-    if (/more\s+tiles|denser|tighter|increase\s+columns/.test(lowercaseMsg)) {
-      settingsUpdate.gridColsDesktop = Math.min((currentSettings.gridColsDesktop || 3) + 1, 5) as any;
-      responseMessage = 'Increased columns for more tiles on screen.';
-    }
-    if (/less\s+tiles|looser|decrease\s+columns|fewer\s+tiles/.test(lowercaseMsg)) {
-      settingsUpdate.gridColsDesktop = Math.max((currentSettings.gridColsDesktop || 3) - 1, 2) as any;
-      responseMessage = 'Decreased columns for larger tiles.';
+
+    if (/disable|remove|turn off/.test(lowercaseMsg) && /(food|animals|emotions|people|places|colors|numbers)/.test(lowercaseMsg)) {
+      const category = lowercaseMsg.match(/(food|animals|emotions|people|places|colors|numbers)/)?.[1];
+      if (category) {
+        const current = currentSettings.enabledCategories || [];
+        settingsUpdate.enabledCategories = current.filter(c => c !== category);
+        responseMessage = `Removed ${category} category from your board.`;
+      }
     }
 
-    // High contrast
-    if (/high\s*contrast|contrast\s*mode/.test(lowercaseMsg)) {
-      const on = !/(off|disable|stop)/.test(lowercaseMsg);
-      settingsUpdate.highContrast = on;
-      responseMessage = on ? 'High contrast mode enabled.' : 'High contrast mode disabled.';
+    // Eye tracking commands
+    if (/eye.track|gaze.track/.test(lowercaseMsg)) {
+      if (/(on|enable|start|activate)/.test(lowercaseMsg)) {
+        settingsUpdate.eyeTrackingEnabled = true;
+        responseMessage = "Eye tracking enabled. Look at tiles to select them.";
+      } else if (/(off|disable|stop|deactivate)/.test(lowercaseMsg)) {
+        settingsUpdate.eyeTrackingEnabled = false;
+        responseMessage = "Eye tracking disabled.";
+      }
     }
 
-    // Labels and emojis
-    if (/hide\s*(labels|text)/.test(lowercaseMsg)) {
-      settingsUpdate.showLabels = false;
-      responseMessage = 'Labels hidden.';
-    } else if (/(show|display)\s*(labels|text)/.test(lowercaseMsg)) {
-      settingsUpdate.showLabels = true;
-      responseMessage = 'Labels shown.';
-    }
-    if (/hide\s*(emoji|emojis|icons|pictures)/.test(lowercaseMsg)) {
-      settingsUpdate.showEmoji = false;
-      responseMessage = 'Emojis hidden.';
-    } else if (/(show|display)\s*(emoji|emojis|icons|pictures)/.test(lowercaseMsg)) {
-      settingsUpdate.showEmoji = true;
-      responseMessage = 'Emojis shown.';
+    // Dwell time adjustment
+    if (/dwell|fixation/.test(lowercaseMsg) && /time/.test(lowercaseMsg)) {
+      if (/(faster|quick|shorter)/.test(lowercaseMsg)) {
+        settingsUpdate.fixationTime = Math.max((currentSettings.fixationTime || 1000) - 200, 300);
+        responseMessage = "Reduced dwell time for faster selection.";
+      } else if (/(slower|longer)/.test(lowercaseMsg)) {
+        settingsUpdate.fixationTime = Math.min((currentSettings.fixationTime || 1000) + 200, 3000);
+        responseMessage = "Increased dwell time for more accurate selection.";
+      }
     }
 
-    // Gaze dot visibility
-    if (/(show|hide)\s*(gaze|eye|tracking)\s*(dot|cursor)?/.test(lowercaseMsg)) {
-      const show = /show/.test(lowercaseMsg);
-      settingsUpdate.showGazeDot = show;
-      responseMessage = show ? 'Gaze dot shown.' : 'Gaze dot hidden.';
-    }
-
-    // Voice speed
+    // Voice commands (existing)
     if (/(voice|speech)/.test(lowercaseMsg)) {
       if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-        responseMessage = "I've increased the voice speed.";
+        responseMessage = "Voice speed increased.";
       } else if (/(slower|slow down)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
         responseMessage = 'Voice speed reduced.';
-      } else if (/normal\s*speed/.test(lowercaseMsg)) {
-        settingsUpdate.voiceRate = 1;
-        responseMessage = 'Voice speed reset to normal.';
       }
-
-      if (/(higher|pitch up)/.test(lowercaseMsg)) {
-        settingsUpdate.voicePitch = Math.min((currentSettings.voicePitch || 1) + 0.2, 2);
-        responseMessage = 'Higher voice pitch set.';
-      } else if (/(lower|pitch down|deeper)/.test(lowercaseMsg)) {
-        settingsUpdate.voicePitch = Math.max((currentSettings.voicePitch || 1) - 0.2, 0.5);
-        responseMessage = 'Lower/deeper voice set.';
-      } else if (/normal\s*pitch/.test(lowercaseMsg)) {
-        settingsUpdate.voicePitch = 1;
-        responseMessage = 'Voice pitch reset to normal.';
+      
+      if (/(male|man)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceGender = 'male';
+        responseMessage = "Voice changed to male.";
+      } else if (/(female|woman)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceGender = 'female';
+        responseMessage = "Voice changed to female.";
+      } else if (/child/.test(lowercaseMsg)) {
+        settingsUpdate.voiceGender = 'child';
+        responseMessage = "Voice changed to child-like.";
       }
     }
 
-    // Help
+    // AI features
+    if (/predict|suggestion/.test(lowercaseMsg)) {
+      if (/(on|enable)/.test(lowercaseMsg)) {
+        settingsUpdate.predictiveSuggestions = true;
+        responseMessage = "Predictive suggestions enabled - I'll suggest likely next words.";
+      } else if (/(off|disable)/.test(lowercaseMsg)) {
+        settingsUpdate.predictiveSuggestions = false;
+        responseMessage = "Predictive suggestions disabled.";
+      }
+    }
+
+    // Accessibility
+    if (/contrast/.test(lowercaseMsg)) {
+      settingsUpdate.highContrast = !/(off|disable)/.test(lowercaseMsg);
+      responseMessage = settingsUpdate.highContrast ? 'High contrast enabled for better visibility.' : 'High contrast disabled.';
+    }
+
+    // Help - Enhanced
     if (/help|what can you do/.test(lowercaseMsg)) {
-      responseMessage = `I can customize your AAC board. Try:
+      responseMessage = `I'm your AAC board assistant! I can help with:
 
-🔧 Tiles & Layout:
-• Make tiles bigger/smaller/medium
-• Show 4 columns / use 2 columns on mobile
-• Enable high contrast
-• Hide labels / Show emojis
+🎯 Board Layout:
+• "Make tiles bigger/smaller"
+• "Show 4 columns" / "Use 2 columns on mobile"
+• "Enable high contrast mode"
 
-🎤 Voice:
-• Make voice faster/slower
-• Higher/lower pitch
+🗂️ Categories:
+• "Add animals category"
+• "Remove food category" 
+• "Show only emotions and people"
 
 👁️ Eye Tracking:
-• Show/Hide gaze dot`;
+• "Turn on eye tracking"
+• "Make dwell time faster/slower"
+• "Show/hide gaze dot"
+
+🎤 Voice Settings:
+• "Make voice faster/slower"
+• "Use female/male/child voice"
+• "Higher/lower pitch"
+
+🤖 Smart Features:
+• "Enable predictions"
+• "Turn on word suggestions"
+
+Just tell me what you need!`;
     }
 
-    // Default
+    // Default enhanced response
     if (!responseMessage) {
-      responseMessage = `I can help change tiles, columns, contrast, labels/emojis, voice, and gaze dot. What would you like?`;
+      responseMessage = `I can help customize your AAC board in many ways! Try asking me to:
+• Change tile sizes or layout
+• Add/remove categories  
+• Adjust voice settings
+• Configure eye tracking
+• Enable smart features
+• Improve accessibility
+
+What would you like to change?`;
     }
 
     return {
