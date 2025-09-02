@@ -183,17 +183,32 @@ export function useEyeTracking(): UseEyeTrackingRet {
 const start = async () => {
   if (active) return;
   try {
+    console.log("Starting eye tracking...");
     setActive(true);
+    
+    // Request camera permission first
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { width: 640, height: 480 } 
+    });
+    console.log("Camera access granted");
+    
+    // Stop the stream, webgazer will handle it
+    stream.getTracks().forEach(track => track.stop());
+    
     const WG = await import("webgazer");
     webgazerRef.current = WG.default;
+    console.log("Webgazer loaded");
 
-    await navigator.mediaDevices.getUserMedia({ video: true });
-
+    // Initialize webgazer
     await WG.default
       .setRegression("ridge")
       .setTracker("clmtrackr")
+      .showVideo(false)
+      .showPredictionPoints(false)
       .setGazeListener((data: any) => {
-        if (!data) return;
+        if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') return;
+        console.log("Raw gaze data:", data.x, data.y);
+        
         const r: EyePoint = { x: data.x, y: data.y, timestamp: Date.now() };
         setRaw(r);
 
@@ -217,121 +232,170 @@ const start = async () => {
         setGaze({ x: emaRef.current.x, y: emaRef.current.y, timestamp: r.timestamp });
       })
       .begin();
+      
+    console.log("Webgazer initialized successfully");
+    
+    // Wait a bit for webgazer to start working
+    await sleep(1000);
+    
   } catch (err) {
     console.error("Eye tracking start failed", err);
     setActive(false);
     setState(s => ({
       ...s,
       isCalibrating: false,
-      message: "Camera permission is required for eye tracking"
+      message: `Camera error: ${err instanceof Error ? err.message : 'Unknown error'}`
     }));
+    throw err;
   }
 };
 
-  const stop = () => {
-    if (window.webgazer) window.webgazer.end();
-    setActive(false);
-    setRaw(null);
-    setGaze(null);
-  };
+const stop = () => {
+  console.log("Stopping eye tracking");
+  if (window.webgazer) {
+    window.webgazer.end();
+  }
+  setActive(false);
+  setRaw(null);
+  setGaze(null);
+  emaRef.current = null;
+};
 
 // -------- Calibration flow --------
 const startCalibration = async () => {
-  await start();
-
-  const points = buildGridPoints(4, 3, 0.12); // 4×3, more steps for better fit
-  const cp: CalibPoint[] = points.map(p => ({ tx: p.x, ty: p.y, samples: [] }));
-
-  setState({
-    isCalibrating: true,
-    isCalibrated: false,
-    currentIndex: 0,
-    totalPoints: cp.length,
-    progress01: 0,
-    target: { x: cp[0].tx, y: cp[0].ty },
-    message: "Look at the dot and hold steady",
-    holdPct: 0,
-  });
-
-  // cancel flag
-  let alive = true;
-  cancelCalibRef.current = () => { alive = false; };
-
-  const perPointMs = 1600;     // hold gaze duration per point
-  const minSamples = 50;       // minimum samples per point
-
-  for (let i = 0; i < cp.length && alive; i++) {
-    // collect samples while holding
-    const t0 = performance.now();
-    cp[i].samples = [];
-    while (performance.now() - t0 < perPointMs && alive) {
-      const elapsed = performance.now() - t0;
-      if (raw) cp[i].samples.push(raw);
-      const hp = clamp(elapsed / perPointMs, 0, 1);
-      setState(s => ({ ...s, holdPct: hp }));
-      await sleep(8);
-    }
-    // top-up if needed
-    while (cp[i].samples.length < minSamples && alive) {
-      if (raw) cp[i].samples.push(raw);
-      await sleep(8);
-    }
-
-    // denoise and median
-    const kept = removeOutliersToPct(cp[i].samples, 0.8);
-    cp[i].median = robustMedianXY(kept);
-
-    // progress + next target
-    const nextIdx = i + 1;
-    setState(s => ({
-      ...s,
-      currentIndex: nextIdx,
-      progress01: nextIdx / cp.length,
-      holdPct: 0,
-      target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
-      message: nextIdx < cp.length ? "Look at the dot and hold steady" : "Finishing up...",
-    }));
-    await sleep(250);
-  }
-
-  if (!alive) {
-    setState(s => ({ ...s, isCalibrating: false, message: "Calibration canceled", holdPct: 0 }));
-    return;
-  }
-
-  // build correspondences (raw->target)
-  const src: { x: number; y: number }[] = [];
-  const dst: { x: number; y: number }[] = [];
-  for (const p of cp) {
-    if (p.median) {
-      src.push({ x: p.median.x, y: p.median.y });
-      dst.push({ x: p.tx, y: p.ty });
-    }
-  }
   try {
-    let T = solveAffineLS(src, dst);
-    affRef.current = T;
-    saveCalibration(T);
+    await start();
+    console.log("Eye tracking started for calibration");
 
-    // quick recenter to reduce residual bias
-    await quickRecenter(600);
+    const points = buildGridPoints(4, 3, 0.12); // 4×3, more steps for better fit
+    const cp: CalibPoint[] = points.map(p => ({ tx: p.x, ty: p.y, samples: [] }));
 
-    setState(s => ({
-      ...s,
-      isCalibrating: false,
-      isCalibrated: true,
-      message: "Calibration complete",
-      target: undefined,
-      holdPct: 0,
-    }));
-  } catch (e) {
-    console.error(e);
-    setState(s => ({
-      ...s,
-      isCalibrating: false,
+    setState({
+      isCalibrating: true,
       isCalibrated: false,
-      message: "Calibration failed — try again in better lighting",
+      currentIndex: 0,
+      totalPoints: cp.length,
+      progress01: 0,
+      target: { x: cp[0].tx, y: cp[0].ty },
+      message: "Look at the dot and hold steady. Please wait for eye tracking to start...",
       holdPct: 0,
+    });
+
+    // Wait for webgazer to start producing data
+    console.log("Waiting for eye data...");
+    let attempts = 0;
+    while (!raw && attempts < 50) {
+      await sleep(100);
+      attempts++;
+    }
+    
+    if (!raw) {
+      setState(s => ({
+        ...s,
+        isCalibrating: false,
+        message: "Eye tracking is not working. Please ensure camera permission is granted and try again."
+      }));
+      return;
+    }
+    
+    console.log("Eye data detected, starting calibration");
+    setState(s => ({ ...s, message: "Look at the dot and hold steady" }));
+
+    // cancel flag
+    let alive = true;
+    cancelCalibRef.current = () => { alive = false; };
+
+    const perPointMs = 1600;     // hold gaze duration per point
+    const minSamples = 50;       // minimum samples per point
+
+    for (let i = 0; i < cp.length && alive; i++) {
+      console.log(`Calibrating point ${i + 1}/${cp.length}`);
+      
+      // collect samples while holding
+      const t0 = performance.now();
+      cp[i].samples = [];
+      while (performance.now() - t0 < perPointMs && alive) {
+        const elapsed = performance.now() - t0;
+        if (raw) cp[i].samples.push(raw);
+        const hp = clamp(elapsed / perPointMs, 0, 1);
+        setState(s => ({ ...s, holdPct: hp }));
+        await sleep(8);
+      }
+      // top-up if needed
+      while (cp[i].samples.length < minSamples && alive) {
+        if (raw) cp[i].samples.push(raw);
+        await sleep(8);
+      }
+
+      console.log(`Point ${i + 1} collected ${cp[i].samples.length} samples`);
+
+      // denoise and median
+      const kept = removeOutliersToPct(cp[i].samples, 0.8);
+      cp[i].median = robustMedianXY(kept);
+
+      // progress + next target
+      const nextIdx = i + 1;
+      setState(s => ({
+        ...s,
+        currentIndex: nextIdx,
+        progress01: nextIdx / cp.length,
+        holdPct: 0,
+        target: nextIdx < cp.length ? { x: cp[nextIdx].tx, y: cp[nextIdx].ty } : undefined,
+        message: nextIdx < cp.length ? "Look at the dot and hold steady" : "Finishing up...",
+      }));
+      await sleep(250);
+    }
+
+    if (!alive) {
+      setState(s => ({ ...s, isCalibrating: false, message: "Calibration canceled", holdPct: 0 }));
+      return;
+    }
+
+    // build correspondences (raw->target)
+    const src: { x: number; y: number }[] = [];
+    const dst: { x: number; y: number }[] = [];
+    for (const p of cp) {
+      if (p.median) {
+        src.push({ x: p.median.x, y: p.median.y });
+        dst.push({ x: p.tx, y: p.ty });
+      }
+    }
+    
+    console.log(`Calibration data: ${src.length} points collected`);
+    
+    try {
+      let T = solveAffineLS(src, dst);
+      affRef.current = T;
+      saveCalibration(T);
+
+      // quick recenter to reduce residual bias
+      await quickRecenter(600);
+
+      setState(s => ({
+        ...s,
+        isCalibrating: false,
+        isCalibrated: true,
+        message: "Calibration complete",
+        target: undefined,
+        holdPct: 0,
+      }));
+      console.log("Calibration completed successfully");
+    } catch (e) {
+      console.error("Calibration failed:", e);
+      setState(s => ({
+        ...s,
+        isCalibrating: false,
+        isCalibrated: false,
+        message: "Calibration failed — try again in better lighting",
+        holdPct: 0,
+      }));
+    }
+  } catch (err) {
+    console.error("Calibration error:", err);
+    setState(s => ({
+      ...s,
+      isCalibrating: false,
+      message: `Calibration error: ${err instanceof Error ? err.message : 'Unknown error'}`
     }));
   }
 };

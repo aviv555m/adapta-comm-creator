@@ -89,6 +89,9 @@ export default function CalibrationOverlay({ open, onClose }: Props) {
               {typeof state.holdPct === 'number' && state.isCalibrating && (
                 <p className="text-sm text-gray-600 mt-1">Hold {Math.round((state.holdPct || 0) * 100)}%</p>
               )}
+              {state.isCalibrating && !state.target && (
+                <p className="text-sm text-orange-600 mt-1">Waiting for eye tracking to initialize...</p>
+              )}
             </div>
           </div>
 
