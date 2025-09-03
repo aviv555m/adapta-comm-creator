@@ -16,10 +16,24 @@ interface Message {
   timestamp: Date;
 }
 
+interface TileUsage {
+  tileId: string;
+  count: number;
+  lastUsed: number;
+}
+
+interface UsageData {
+  clickCounts: Record<string, TileUsage>;
+  mostUsedTiles: any[];
+  totalInteractions: number;
+  categoriesUsed: string[];
+}
+
 interface AIChatBotProps {
   onUpdateSettings: (settings: Partial<BoardSettings>) => void;
   currentSettings: BoardSettings;
   onTrackInteraction?: (type: string, data: any) => void;
+  usageData?: UsageData;
 }
 
 interface QuizPersonalization {
@@ -35,7 +49,7 @@ interface QuizPersonalization {
   contextAwareness: string;
 }
 
-export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction }) => {
+export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction, usageData }) => {
   const { language, t } = useLanguage();
   const { questions } = useQuiz();
   const [isOpen, setIsOpen] = useState(false);

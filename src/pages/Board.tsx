@@ -539,6 +539,13 @@ const gridDesktopClass = 'grid-cols-3';
           onTrackInteraction={(type, data) => {
             trackInteraction({ type: type as any, data });
           }}
+          usageData={{
+            clickCounts: usage,
+            mostUsedTiles: getMostUsedTiles(boardConfig.tiles, 10),
+            totalInteractions: Object.values(usage).reduce((sum, tileUsage) => sum + tileUsage.count, 0),
+            categoriesUsed: [...new Set(Object.keys(usage).map(tileId => 
+              boardConfig.tiles.find(t => t.id === tileId)?.category).filter(Boolean))]
+          }}
         />
 
         {/* AI Control Panel */}
