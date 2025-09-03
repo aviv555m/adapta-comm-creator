@@ -43,6 +43,11 @@ const Board = () => {
   
   // Timer to reset button scaling every 20 seconds
   const [scalingReset, setScalingReset] = useState(0);
+  
+  // Manual reset function for button sizes
+  const resetButtonSizes = () => {
+    setScalingReset(prev => prev + 100); // Large increment to reset all buttons
+  };
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -270,6 +275,15 @@ const gridDesktopClass = 'grid-cols-3';
             >
               <Languages className="h-5 w-5 mr-2" />
               {language === 'en' ? 'עברית' : 'English'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={resetButtonSizes}
+              className="secondary-button h-12 px-6 text-lg"
+              title="Reset all button sizes"
+            >
+              <span className="mr-2">↻</span>
+              {t('reset') || 'Reset'}
             </Button>
             <Button
               variant="default"
