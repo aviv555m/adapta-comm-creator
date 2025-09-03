@@ -95,7 +95,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
             messages: [
               {
                 role: 'system',
-                content: `You are an AAC (Augmentative and Alternative Communication) assistant. Help users customize their communication board. You can modify these settings: tileSize (1-10), voiceRate (0.5-2), voicePitch (0.5-2), highContrast (true/false), showLabels (true/false), showEmoji (true/false), showGazeDot (true/false), enabledCategories (array). Respond with helpful advice and if making changes, mention them clearly. Current settings: ${JSON.stringify(currentSettings)}`
+                content: `You are an AAC (Augmentative and Alternative Communication) assistant. Help users customize their communication board. You can modify these settings: tileSize (1-10), voiceRate (0.5-2), voicePitch (0.5-2), voiceGender ('male'/'female'/'neutral'), highContrast (true/false), showLabels (true/false), showEmoji (true/false), showGazeDot (true/false), enabledCategories (array). Respond concisely (e.g., "Done. Voice slower, male.") and, when making changes, mention them clearly. Current settings: ${JSON.stringify(currentSettings)}`
               },
               {
                 role: 'user', 
@@ -307,19 +307,27 @@ What would you like to change?`;
       }
     }
 
-    // Voice adjustments with explanations
+    // Voice adjustments with concise confirmations
     else if (/(voice|speech)/.test(lowercaseMsg)) {
       if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-        responseMessage = "Voice speed increased! Faster speech is great for:\n• Experienced AAC users\n• Quick conversations\n• Reducing wait time\n\nToo fast? Just ask me to slow it down.";
-      } else if (/(slower|slow down)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
-        responseMessage = 'Voice slowed down. Slower speech helps with:\n• Better comprehension\n• Learning new words\n• Giving listeners time to understand\n\nPerfect for new AAC users!';
-      } else if (/(male|man)/.test(lowercaseMsg)) {
-        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
-      } else if (/(female|woman)/.test(lowercaseMsg)) {
-        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
+        responseMessage = 'Done. Voice faster.';
       }
+      if (/(slower|slow down)/.test(lowercaseMsg)) {
+        settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
+        responseMessage = responseMessage ? `${responseMessage} Voice slower.` : 'Done. Voice slower.';
+      }
+      if (/(male|man)/.test(lowercaseMsg)) {
+        // Prefer male voice
+        settingsUpdate.voiceGender = 'male';
+        responseMessage = responseMessage ? `${responseMessage} Male voice.` : 'Done. Male voice.';
+      }
+      if (/(female|woman)/.test(lowercaseMsg)) {
+        // Prefer female voice
+        settingsUpdate.voiceGender = 'female';
+        responseMessage = responseMessage ? `${responseMessage} Female voice.` : 'Done. Female voice.';
+      }
+      if (!responseMessage) responseMessage = 'Updated voice settings.';
     }
 
     // Default helpful response
@@ -353,10 +361,17 @@ What would you like help with?`;
       settings.tileSize = 3;
     }
     
-    if (/(faster|speed up)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
+    if (/(faster|speed up)/.test(lowerMsg) && /(voice|speak)/.test(lowerMsg)) {
       settings.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-    } else if (/(slower|slow down)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
+    } else if (/(slower|slow down)/.test(lowerMsg) && /(voice|speak)/.test(lowerMsg)) {
       settings.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
+    }
+
+    if (/(male|man)/.test(lowerMsg)) {
+      settings.voiceGender = 'male';
+    } else if (/(female|woman)/.test(lowerMsg)) {
+      
+      settings.voiceGender = 'female';
     }
     
     if (/high contrast/.test(lowerMsg)) {

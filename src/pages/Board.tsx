@@ -251,14 +251,33 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     return descriptions[tile.text.toLowerCase()] || `Use this to say "${tile.text}"`;
   };
 
-  const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = settings.voiceRate ?? 1;
-    utterance.pitch = settings.voicePitch ?? 1;
-    utterance.lang = language === 'he' ? 'he-IL' : 'en-US';
-    speechSynthesis.speak(utterance);
-  };
+const speakText = (text: string) => {
+  if (!('speechSynthesis' in window)) return;
+  const langCode = language === 'he' ? 'he-IL' : 'en-US';
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = settings.voiceRate ?? 1;
+  utterance.pitch = settings.voicePitch ?? 1;
+  utterance.lang = langCode;
+
+  // Try to select a voice matching language and preferred gender
+  const voices = speechSynthesis.getVoices();
+  const langVoices = voices.filter(v => v.lang && v.lang.startsWith(langCode));
+  const gender = settings.voiceGender;
+  const maleHints = ['male', 'daniel', 'david', 'george', 'james', 'asaf', 'tomer', 'zohar', 'guy'];
+  const femaleHints = ['female', 'samantha', 'victoria', 'sarah', 'hila', 'naomi', 'carmit', 'noa', 'shiri'];
+  let selected: SpeechSynthesisVoice | undefined;
+  if (gender === 'male') {
+    selected = langVoices.find(v => maleHints.some(h => v.name.toLowerCase().includes(h)));
+  } else if (gender === 'female') {
+    selected = langVoices.find(v => femaleHints.some(h => v.name.toLowerCase().includes(h)));
+  }
+  if (!selected && langVoices.length) {
+    selected = langVoices[0];
+  }
+  if (selected) utterance.voice = selected;
+
+  speechSynthesis.speak(utterance);
+};
 
 const handleTileClick = (tile: BoardTile) => {
   setSelectedTile(tile);
