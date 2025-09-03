@@ -45,8 +45,19 @@ interface Recommendation {
 
 export const useBehaviorAnalytics = () => {
   const [interactions, setInteractions] = useState<InteractionEvent[]>(() => {
-    const stored = localStorage.getItem('echoes_behavior_analytics');
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem('echoes_behavior_analytics');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Keep only last 1000 interactions to prevent quota issues
+        return parsed.slice(-1000);
+      }
+    } catch (error) {
+      console.warn('Failed to load behavior analytics from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('echoes_behavior_analytics');
+    }
+    return [];
   });
 
   const [currentSession, setCurrentSession] = useState<{
@@ -64,9 +75,30 @@ export const useBehaviorAnalytics = () => {
   const [behaviorPattern, setBehaviorPattern] = useState<BehaviorPattern | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
-  // Save interactions to localStorage
+  // Save interactions to localStorage with quota management
   useEffect(() => {
-    localStorage.setItem('echoes_behavior_analytics', JSON.stringify(interactions));
+    try {
+      // Keep only last 1000 interactions to prevent quota issues
+      const limitedInteractions = interactions.slice(-1000);
+      localStorage.setItem('echoes_behavior_analytics', JSON.stringify(limitedInteractions));
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        console.warn('localStorage quota exceeded, clearing old analytics data');
+        // Keep only last 500 interactions when quota is exceeded
+        const reducedInteractions = interactions.slice(-500);
+        try {
+          localStorage.setItem('echoes_behavior_analytics', JSON.stringify(reducedInteractions));
+          setInteractions(reducedInteractions);
+        } catch (retryError) {
+          console.error('Failed to save even reduced analytics data:', retryError);
+          // Clear all data as last resort
+          localStorage.removeItem('echoes_behavior_analytics');
+          setInteractions([]);
+        }
+      } else {
+        console.error('Failed to save behavior analytics:', error);
+      }
+    }
   }, [interactions]);
 
   // Analyze behavior patterns every 30 seconds
@@ -87,7 +119,11 @@ export const useBehaviorAnalytics = () => {
       timestamp: Date.now()
     };
 
-    setInteractions(prev => [...prev, newInteraction]);
+    setInteractions(prev => {
+      // Limit to 1000 interactions to prevent memory/storage issues
+      const updated = [...prev, newInteraction];
+      return updated.length > 1000 ? updated.slice(-1000) : updated;
+    });
     
     // Update current session
     setCurrentSession(prev => ({
