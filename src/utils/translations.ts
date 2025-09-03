@@ -361,6 +361,7 @@ export const translations = {
     tapTileFirst: 'הקש על משבצת קודם, ואז לחץ מוכן.',
     returningToCategories: 'חוזר לקטגוריות הראשיות',
     echoesBoard: 'לוח הדים',
+    echoesBoard2: 'לוח אקוס',
     layout: 'פריסה',
     
     boardData: {

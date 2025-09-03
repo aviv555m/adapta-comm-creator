@@ -326,12 +326,12 @@ const gridDesktopClass = 'grid-cols-3';
         </div>
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
+        <div className={`flex justify-between items-center mb-6 ${language === 'he' ? 'flex-row-reverse' : ''}`}>
+          <div className={language === 'he' ? 'text-right' : ''}>
             <h1 className="text-2xl font-bold text-foreground">{language === 'he' ? t('echoesBoard2') : t('echoesBoard')}</h1>
             <p className="text-muted-foreground">{t('layout')}: {boardConfig.layout}</p>
           </div>
-          <div className="flex space-x-2">
+          <div className={`flex space-x-2 ${language === 'he' ? 'flex-row-reverse space-x-reverse' : ''}`}>
             <Button
               variant="outline"
               onClick={toggleLanguage}
