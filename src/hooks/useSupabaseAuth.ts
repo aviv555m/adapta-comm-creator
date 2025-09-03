@@ -28,16 +28,14 @@ export const useSupabaseAuth = () => {
   }, []);
 
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectUrl
+        redirectTo: window.location.origin
       }
     });
     
-    return { error };
+    return { data, error };
   };
 
   const signOut = async () => {

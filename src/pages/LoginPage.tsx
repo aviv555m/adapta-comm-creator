@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useProviderCheck } from '@/hooks/useProviderCheck';
 import { useEventLogger } from '@/hooks/useEventLogger';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { toast } from '@/hooks/use-toast';
+import GoogleProviderModal from '@/components/GoogleProviderModal';
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { signInWithGoogle, isAuthenticated } = useSupabaseAuth();
+  const { googleEnabled, loading: providerLoading, recheckProviders } = useProviderCheck();
   const { logEvent } = useEventLogger();
   const { layout } = useResponsiveLayout();
 
@@ -21,21 +24,45 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   const handleGoogleSignIn = async () => {
+    // Check if Google provider is enabled before attempting login
+    if (googleEnabled === false) {
+      toast({
+        title: "Google Login Unavailable",
+        description: "Google provider is not enabled. Please check configuration.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await signInWithGoogle();
+      const { data, error } = await signInWithGoogle();
       
       if (error) {
-        setError(error.message);
+        console.error('Google sign-in error:', error);
+        
+        // Handle specific provider error
+        if (error.message.includes('provider is not enabled')) {
+          await recheckProviders();
+          toast({
+            title: "Provider Not Enabled",
+            description: "Google provider is not enabled in Supabase. Please enable it first.",
+            variant: "destructive"
+          });
+        } else {
+          setError(error.message);
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+        
         await logEvent('login_failed', error.message);
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive"
-        });
       } else {
+        console.log('Google sign-in successful:', data);
         await logEvent('login_success', 'google');
         toast({
           title: "Login Successful",
@@ -60,6 +87,15 @@ const LoginPage = () => {
     setError(null);
     handleGoogleSignIn();
   };
+
+  // Show loading state while checking providers
+  if (providerLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-primary/5 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -153,6 +189,13 @@ const LoginPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Google Provider Modal */}
+      <GoogleProviderModal 
+        open={googleEnabled === false}
+        onRecheck={recheckProviders}
+        loading={providerLoading}
+      />
     </div>
   );
 };
