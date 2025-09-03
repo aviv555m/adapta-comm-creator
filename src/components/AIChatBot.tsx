@@ -387,7 +387,7 @@ What would you like help with?`;
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-[460px] h-[580px] shadow-2xl">
+    <Card className="fixed bottom-4 right-4 z-50 w-[620px] h-[740px] shadow-2xl">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />
