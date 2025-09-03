@@ -269,28 +269,6 @@ const gridDesktopClass = 'grid-cols-3';
           </div>
         </div>
 
-        {/* Back to Categories Button - Fixed Position at Top Left when viewing tiles */}
-        {currentCategory !== 'All' && (
-          <div className="fixed top-4 left-4 z-10">
-            <Button
-              variant="default"
-              className="h-20 w-32 bg-blue-600 text-white hover:bg-blue-700 px-2 py-3 shadow-lg"
-              onClick={() => {
-                setCurrentCategory('All');
-                speakText(t('categories'));
-                toast({ title: t('categories'), description: 'Going back to categories', duration: 1500 });
-              }}
-            >
-              <div className="flex flex-col items-center justify-center gap-1">
-                <span className="text-3xl">📋</span>
-                <span className="text-sm font-bold leading-tight text-center break-words">
-                  ← {t('categories')}
-                </span>
-              </div>
-            </Button>
-          </div>
-        )}
-
         {/* Full Screen Board Area */}
         <div className="w-full min-h-[80vh]">
           {currentCategory === 'All' ? (
@@ -325,37 +303,59 @@ const gridDesktopClass = 'grid-cols-3';
               })}
             </div>
           ) : (
-            // Show exactly 9 Tiles for selected category in full screen 3x3 grid
-            <div className="grid grid-cols-3 gap-6 p-6 min-h-[80vh]">
-              {filteredTiles.map((tile) => {
-                const translatedText = t('boardData', tile.text) || tile.text;
-                const tileDescription = getTileDescription(tile);
-                return (
-                  <Button
-                    key={tile.id}
-                    variant="outline"
-                    className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[200px] ${
-                      selectedTile?.id === tile.id 
-                        ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                        : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                    }`}
-                    onClick={() => handleTileClick(tile)}
-                    title={`${translatedText} - ${tileDescription}`}
-                  >
-                    {settings.showEmoji !== false && tile.emoji && (
-                      <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
-                    )}
-                    {settings.showLabels !== false && (
-                      <>
-                        <span className="text-lg font-medium leading-tight text-center mb-2">{translatedText}</span>
-                        <span className="text-sm text-muted-foreground leading-tight text-center px-2">
-                          {tileDescription}
-                        </span>
-                      </>
-                    )}
-                  </Button>
-                );
-              })}
+            // Show Back to Categories button first, then 9 Tiles for selected category
+            <div className="flex flex-col items-center gap-6 p-6 min-h-[80vh]">
+              {/* Back to Categories Button in the middle */}
+              <Button
+                variant="default"
+                className="h-24 w-80 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
+                onClick={() => {
+                  setCurrentCategory('All');
+                  speakText('Back to Categories');
+                  toast({ title: 'Back to Categories', description: 'Returning to main categories', duration: 1500 });
+                }}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-4xl">📋</span>
+                  <span className="text-xl font-bold">
+                    ← Back to Categories
+                  </span>
+                </div>
+              </Button>
+
+              {/* 9 Tiles for selected category in 3x3 grid */}
+              <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
+                {filteredTiles.map((tile) => {
+                  const translatedText = t('boardData', tile.text) || tile.text;
+                  const tileDescription = getTileDescription(tile);
+                  const tileName = translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
+                  return (
+                    <Button
+                      key={tile.id}
+                      variant="outline"
+                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[200px] ${
+                        selectedTile?.id === tile.id 
+                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                      }`}
+                      onClick={() => handleTileClick(tile)}
+                      title={`${tileName} - ${tileDescription}`}
+                    >
+                      {settings.showEmoji !== false && tile.emoji && (
+                        <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
+                      )}
+                      {settings.showLabels !== false && (
+                        <>
+                          <span className="text-xl font-bold leading-tight text-center mb-2">{tileName}</span>
+                          <span className="text-sm text-muted-foreground leading-tight text-center px-2">
+                            {tileDescription}
+                          </span>
+                        </>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
