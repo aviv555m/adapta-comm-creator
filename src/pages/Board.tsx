@@ -432,7 +432,7 @@ const gridDesktopClass = 'grid-cols-3';
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
-                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300`}>{tile.emoji}</span>
+                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300 overflow-hidden flex-shrink-0`}>{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
