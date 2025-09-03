@@ -78,9 +78,11 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     if (currentCategory === 'All') {
       return tiles;
     } else if (currentCategory === 'Most Used') {
-      return getMostUsedTiles(tiles, 12);
+      return getMostUsedTiles(tiles, 9); // Changed to 9 for consistency
     } else {
-      return tiles.filter(tile => tile.category === currentCategory);
+      // Get exactly 9 tiles from the selected category
+      const categoryTiles = tiles.filter(tile => tile.category === currentCategory);
+      return categoryTiles.slice(0, 9);
     }
   })();
 
@@ -263,15 +265,19 @@ const gridDesktopClass = 'grid-cols-3';
                 <CardContent className="p-4">
                   <Button
                     variant="default"
-                    className="w-full h-20 text-xl bg-blue-600 text-white hover:bg-blue-700"
+                    className="w-full h-20 bg-blue-600 text-white hover:bg-blue-700 px-2 py-3"
                     onClick={() => {
                       setCurrentCategory('All');
                       speakText(t('categories'));
                       toast({ title: t('categories'), description: 'Going back to categories', duration: 1500 });
                     }}
                   >
-                    <span className="text-3xl mr-3">📋</span>
-                    ← {t('categories')}
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <span className="text-2xl">📋</span>
+                      <span className="text-xs font-bold leading-tight text-center break-words">
+                        ← {t('categories')}
+                      </span>
+                    </div>
                   </Button>
                 </CardContent>
               </Card>
@@ -308,14 +314,16 @@ const gridDesktopClass = 'grid-cols-3';
                           <span className="text-8xl mb-2 leading-none">
                             {getCategoryEmoji(category)}
                           </span>
-                          <span className="text-[10px] font-medium leading-tight opacity-80">{categoryName}</span>
+                          <span className="text-xs font-medium leading-tight opacity-80 text-center break-words px-1">
+                            {categoryName}
+                          </span>
                         </Button>
                       );
                     })}
                   </div>
                 ) : (
-                  // Show Tiles for selected category
-                  <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
+                  // Show exactly 9 Tiles for selected category in 3x3 grid
+                  <div className="grid grid-cols-3 gap-3">
                     {filteredTiles.map((tile) => {
                       const translatedText = t('boardData', tile.text) || tile.text;
                       return (

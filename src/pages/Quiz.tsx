@@ -203,19 +203,29 @@ const Quiz = () => {
           <RadioGroup 
             value={selectedValue} 
             onValueChange={handleAnswer}
-            className="space-y-3"
+            className="space-y-4"
           >
-            {currentQuestion.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <label 
-                  htmlFor={`option-${index}`}
-                  className="flex-1 p-5 border border-input rounded-xl hover:bg-accent cursor-pointer transition-colors"
-                >
-                  {option}
-                </label>
-              </div>
-            ))}
+            {currentQuestion.options.map((option, index) => {
+              // Extract emoji and text from option
+              const emojiMatch = option.match(/^([^\w\s]+)/);
+              const emoji = emojiMatch ? emojiMatch[1] : '';
+              const text = option.replace(/^[^\w\s]+\s*/, '');
+              
+              return (
+                <div key={index} className="flex items-center space-x-4">
+                  <RadioGroupItem value={option} id={`option-${index}`} />
+                  <label 
+                    htmlFor={`option-${index}`}
+                    className="flex-1 p-6 border border-input rounded-xl hover:bg-accent cursor-pointer transition-colors flex items-center gap-4"
+                  >
+                    {emoji && (
+                      <span className="text-[5rem] leading-none">{emoji}</span>
+                    )}
+                    <span className="text-sm font-medium">{text || option}</span>
+                  </label>
+                </div>
+              );
+            })}
           </RadioGroup>
 
           {/* Validation Error */}
