@@ -14,6 +14,8 @@ import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
 import { BoardTile } from '@/types/board';
 import { AIChatBot } from '@/components/AIChatBot';
+import { AIControlPanel } from '@/components/AIControlPanel';
+import { useBehaviorAnalytics } from '@/hooks/useBehaviorAnalytics';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const Board = () => {
@@ -23,6 +25,7 @@ const Board = () => {
   const { language, t, toggleLanguage } = useLanguage();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
   const [currentCategory, setCurrentCategory] = useState('Most Used');
+  const [aiControlPanelOpen, setAiControlPanelOpen] = useState(false);
   
   // Eye tracking
   const { 
@@ -34,8 +37,9 @@ const Board = () => {
     startCalibration 
   } = useEyeTracking();
   
-  // Usage tracking
+  // Usage tracking and behavior analytics
   const { trackTileUsage, getMostUsedTiles } = useUsageTracking();
+  const { trackInteraction, startSession, endSession } = useBehaviorAnalytics();
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -179,6 +183,17 @@ const speakText = (text: string) => {
   const handleTileClick = (tile: BoardTile) => {
     setSelectedTile(tile);
     trackTileUsage(tile.id);
+    
+    // Track interaction for AI analysis
+    trackInteraction({
+      type: 'tile_click',
+      data: { 
+        tileId: tile.id, 
+        category: tile.category,
+        success: true 
+      }
+    });
+    
     const translatedText = t('boardData', tile.text) || tile.text;
     speakText(translatedText);
     toast({ title: translatedText, description: t('speakingNow'), duration: 1500 });
@@ -211,6 +226,12 @@ const tileHeightStyle = { height: `${calculatedHeight}px` };
 // Force 3 columns layout for very big buttons
 const gridMobileClass = 'grid-cols-3';
 const gridDesktopClass = 'grid-cols-3';
+
+  // Start session tracking when component mounts
+  React.useEffect(() => {
+    startSession();
+    return () => endSession();
+  }, [startSession, endSession]);
 
   return (
     <div className="app-container">
@@ -251,19 +272,7 @@ const gridDesktopClass = 'grid-cols-3';
             <Button
               variant="default"
               className="bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => {
-                if (settings.ollamaUrl && settings.ollamaModel) {
-                  toast({
-                    title: t('aiAdapt'),
-                    description: '🤖 AI is ready! Use the chat in the bottom right to customize your board.',
-                  });
-                } else {
-                  toast({
-                    title: 'AI Not Connected',
-                    description: 'Please configure Ollama in settings first.',
-                  });
-                }
-              }}
+              onClick={() => setAiControlPanelOpen(true)}
             >
               <span className="mr-1">🤖</span>
               <Volume2 className="h-4 w-4 mr-1" />
@@ -451,6 +460,21 @@ const gridDesktopClass = 'grid-cols-3';
 
         {/* AI Chat Bot */}
         <AIChatBot
+          currentSettings={settings}
+          onUpdateSettings={(newSettings) => {
+            const updatedSettings = { ...settings, ...newSettings };
+            setSettings(updatedSettings);
+            localStorage.setItem('echoes_board_settings', JSON.stringify(updatedSettings));
+          }}
+          onTrackInteraction={(type, data) => {
+            trackInteraction({ type: type as any, data });
+          }}
+        />
+
+        {/* AI Control Panel */}
+        <AIControlPanel
+          isOpen={aiControlPanelOpen}
+          onClose={() => setAiControlPanelOpen(false)}
           currentSettings={settings}
           onUpdateSettings={(newSettings) => {
             const updatedSettings = { ...settings, ...newSettings };

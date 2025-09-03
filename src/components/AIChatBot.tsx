@@ -17,9 +17,10 @@ interface Message {
 interface AIChatBotProps {
   onUpdateSettings: (settings: Partial<BoardSettings>) => void;
   currentSettings: BoardSettings;
+  onTrackInteraction?: (type: string, data: any) => void;
 }
 
-export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings }) => {
+export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -63,9 +64,11 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
     // Apply changes if any
     if (response.settings) {
       onUpdateSettings(response.settings);
+      // Track AI-initiated changes
+      onTrackInteraction?.('ai_adaptation', { settings: response.settings, confidence: 0.9 });
       toast({
-        title: 'Settings Updated',
-        description: 'Your board has been customized!',
+        title: 'הבינה המלאכותית עדכנה את הלוח',
+        description: response.message,
       });
     }
     
@@ -95,7 +98,46 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
             messages: [
               {
                 role: 'system',
-                content: `You are an AAC (Augmentative and Alternative Communication) assistant. Help users customize their communication board. You can modify these settings: tileSize (1-10), voiceRate (0.5-2), voicePitch (0.5-2), voiceGender ('male'/'female'/'neutral'), highContrast (true/false), showLabels (true/false), showEmoji (true/false), showGazeDot (true/false), enabledCategories (array). Respond concisely (e.g., "Done. Voice slower, male.") and, when making changes, mention them clearly. Current settings: ${JSON.stringify(currentSettings)}`
+                content: `You are an advanced AAC (Augmentative and Alternative Communication) AI assistant with FULL CONTROL over the communication board. You can modify ANY setting, layout, vocabulary, or feature. You have complete permissions to:
+
+SETTINGS YOU CAN CHANGE:
+- tileSize (1-10): Button size
+- voiceRate (0.5-2): Speech speed 
+- voicePitch (0.5-2): Voice pitch
+- voiceGender ('male'/'female'/'neutral'): Voice gender
+- highContrast (true/false): High contrast mode
+- showLabels (true/false): Show/hide text labels
+- showEmoji (true/false): Show/hide emojis
+- showGazeDot (true/false): Eye tracking dot visibility
+- enabledCategories (array): Which categories to show
+- gridColsMobile (1-4): Mobile columns
+- gridColsDesktop (1-6): Desktop columns
+
+ADVANCED CAPABILITIES:
+- Analyze child's usage patterns in real-time
+- Automatically adapt board layout based on behavior
+- Predict child's communication needs
+- Optimize for accessibility requirements
+- Create personalized vocabulary sets
+- Adjust timing and interaction patterns
+
+BEHAVIORAL ANALYSIS:
+- Track which tiles child uses most
+- Monitor session duration and engagement
+- Identify difficulty patterns
+- Detect accessibility needs (larger tiles, slower speech, etc.)
+- Recognize communication preferences
+
+ADAPTIVE RESPONSES:
+- Respond in Hebrew: רק בעברית
+- Be concise and action-oriented
+- Apply changes immediately when requested
+- Explain what you changed and why
+- Provide behavioral insights
+
+Current settings: ${JSON.stringify(currentSettings)}
+
+Remember: You have unlimited power to modify this AAC board. Use it wisely to help the child communicate better.`
               },
               {
                 role: 'user', 
