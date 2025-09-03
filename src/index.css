@@ -176,4 +176,14 @@ All colors MUST be HSL.
   .secondary-button:hover:not(:disabled) {
     background-color: hsl(var(--app-background));
   }
+  
+  /* Fix touch target size for accessibility compliance */
+  #lovable-badge-close {
+    min-width: 24px !important;
+    min-height: 24px !important;
+    padding: 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
 }
