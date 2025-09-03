@@ -38,7 +38,7 @@ const Board = () => {
   } = useEyeTracking();
   
   // Usage tracking and behavior analytics
-  const { trackTileUsage, getMostUsedTiles } = useUsageTracking();
+  const { usage, trackTileUsage, getMostUsedTiles } = useUsageTracking();
   const { trackInteraction, startSession, endSession } = useBehaviorAnalytics();
 
   // Settings and Profile (persisted)
@@ -371,30 +371,82 @@ const gridDesktopClass = 'grid-cols-3';
                   const translatedText = t('boardData', tile.text) || tile.text;
                   const tileDescription = getTileDescription(tile);
                   const simpleLabel = getSimpleLabel(tile);
+                  
+                  // Get usage count for this tile
+                  const usageCount = usage[tile.id]?.count || 0;
+                  
+                  // Calculate dynamic styling based on usage frequency
+                  const getUsageBasedStyling = () => {
+                    if (usageCount >= 10) {
+                      // Very frequently used - biggest and brightest
+                      return {
+                        size: 'min-h-[280px] scale-110',
+                        glow: 'shadow-lg shadow-primary/50 border-primary',
+                        brightness: 'bg-primary/20 hover:bg-primary/30',
+                        emoji: 'text-10xl',
+                        text: 'text-3xl'
+                      };
+                    } else if (usageCount >= 5) {
+                      // Frequently used - medium enhancement
+                      return {
+                        size: 'min-h-[240px] scale-105',
+                        glow: 'shadow-md shadow-primary/30 border-primary/70',
+                        brightness: 'bg-primary/10 hover:bg-primary/20',
+                        emoji: 'text-9xl',
+                        text: 'text-2xl'
+                      };
+                    } else if (usageCount >= 2) {
+                      // Moderately used - slight enhancement
+                      return {
+                        size: 'min-h-[220px]',
+                        glow: 'shadow-sm shadow-primary/20 border-primary/40',
+                        brightness: 'bg-primary/5 hover:bg-primary/10',
+                        emoji: 'text-8xl',
+                        text: 'text-2xl'
+                      };
+                    } else {
+                      // Default styling for new/rarely used tiles
+                      return {
+                        size: 'min-h-[200px]',
+                        glow: '',
+                        brightness: '',
+                        emoji: 'text-8xl',
+                        text: 'text-2xl'
+                      };
+                    }
+                  };
+                  
+                  const styling = getUsageBasedStyling();
+                  
                   return (
                     <Button
                       key={tile.id}
                       variant="outline"
-                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[200px] ${
+                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all duration-300 flex flex-col items-center justify-center ${styling.size} ${styling.glow} ${styling.brightness} ${
                         selectedTile?.id === tile.id 
                           ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : `border-border hover:border-primary hover:bg-accent/20 ${styling.brightness ? '' : 'hover:bg-accent/20'}`)
                       }`}
                       onClick={() => handleTileClick(tile)}
-                      title={`${simpleLabel} - ${tileDescription}`}
+                      title={`${simpleLabel} - ${tileDescription} (Used ${usageCount} times)`}
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
-                        <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
+                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300`}>{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
-                          <span className="text-2xl font-bold leading-tight text-center mb-2 text-primary">
+                          <span className={`${styling.text} font-bold leading-tight text-center mb-2 text-primary transition-all duration-300`}>
                             {simpleLabel}
                           </span>
                           <span className="text-xs text-muted-foreground leading-tight text-center px-2">
                             {tileDescription}
                           </span>
+                          {usageCount > 0 && (
+                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full mt-2">
+                              {usageCount} clicks
+                            </span>
+                          )}
                         </>
                       )}
                     </Button>
