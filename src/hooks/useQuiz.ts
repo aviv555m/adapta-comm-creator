@@ -19,372 +19,112 @@ export interface QuizEvent {
 const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
   {
     id: 1,
-    label: "What best describes your communication needs?",
+    label: "How do you prefer to communicate now?",
     type: 'single',
     options: [
-      "I need help expressing basic needs",
-      "I want to have conversations", 
-      "I need emergency communication",
-      "I want to learn communication skills",
-      "All of the above"
+      "👉 Point with hands/fingers",
+      "👀 Look with eyes",
+      "🗣️ Make sounds/gestures",
+      "🖼️ Use pictures or symbols"
     ]
   },
   {
     id: 2,
-    label: "What is your primary way of accessing a device?",
+    label: "What are your favorite things to talk about?",
     type: 'single',
     options: [
-      "Touch with fingers",
-      "Touch with stylus or pointer",
-      "Eye gaze",
-      "Switch scanning",
-      "Head mouse"
+      "👫 Friends & family",
+      "🎮 Games & toys",
+      "🏫 School & learning",
+      "🍔🐶 Food, animals & hobbies"
     ]
   },
   {
     id: 3,
-    label: "How familiar are you with AAC devices?",
+    label: "Which language(s) do you use most at home or school?",
     type: 'single',
     options: [
-      "Completely new to AAC",
-      "Some experience with simple devices",
-      "Experienced with AAC apps",
-      "Very experienced user",
-      "Professional/therapist"
+      "🇮🇱 Hebrew",
+      "🇷🇺 Russian",
+      "🇬🇧 English",
+      "🌍 More than one / Mixed"
     ]
   },
   {
     id: 4,
-    label: "What type of device will you primarily use?",
+    label: "How do you like to build your messages?",
     type: 'single',
     options: [
-      "Tablet (iPad/Android)",
-      "Smartphone only",
-      "Dedicated AAC device",
-      "Computer/laptop",
-      "Multiple devices"
+      "🔘 One button at a time",
+      "✌️ Two or three words together",
+      "📑 Ready-made phrases",
+      "📝 Mix words & make my own"
     ]
   },
   {
     id: 5,
-    label: "How would you describe your motor abilities?",
+    label: "Which pictures are easiest for you to use?",
     type: 'single',
     options: [
-      "Full fine motor control",
-      "Some difficulty with small targets",
-      "Need larger buttons/targets",
-      "Limited range of motion",
-      "Prefer alternative access methods"
+      "📸 Real photos",
+      "✏️ Cartoon drawings",
+      "🎨 Colorful icons",
+      "🌟 My own custom images"
     ]
   },
   {
     id: 6,
-    label: "Do you have vision considerations?",
+    label: "How do you want the app to sound when it speaks?",
     type: 'single',
     options: [
-      "No vision concerns",
-      "Need larger text/buttons",
-      "High contrast needed",
-      "Low vision accommodations",
-      "Use screen reader"
+      "👦 Child's voice",
+      "👨 Man's voice",
+      "👩 Woman's voice",
+      "🤖 Robot/fun voice"
     ]
   },
   {
     id: 7,
-    label: "What type of voice would you prefer?",
+    label: "What emotions should Echoes help you show first?",
     type: 'single',
     options: [
-      "Adult male voice",
-      "Adult female voice", 
-      "Child voice (if appropriate)",
-      "My own recorded voice",
-      "No preference"
+      "😀 Happy / Excited",
+      "😢 Sad",
+      "😡 Angry",
+      "😨 Scared / Worried"
     ]
   },
   {
     id: 8,
-    label: "How fast should the voice speak?",
+    label: "Do you want the app to suggest new words automatically?",
     type: 'single',
     options: [
-      "Very slow",
-      "Slow",
-      "Normal speed",
-      "Fast",
-      "Let me adjust as needed"
+      "✅ Yes, always",
+      "🔄 Sometimes",
+      "🕒 Rarely",
+      "❌ No, keep the same"
     ]
   },
   {
     id: 9,
-    label: "What environments will you use this in?",
+    label: "When you need help quickly, what should the app do?",
     type: 'single',
     options: [
-      "Mostly at home",
-      "School/work settings",
-      "Public/community spaces",
-      "Medical appointments",
-      "All environments"
+      "🆘 Big \"Help me\" button",
+      "👍👎 Quick Yes / No choices",
+      "👨‍👩‍👦 Show people I choose",
+      "🌈 Calming pictures or sounds"
     ]
   },
   {
     id: 10,
-    label: "Who will you communicate with most?",
+    label: "Do you want Echoes to look different in different places?",
     type: 'single',
     options: [
-      "Family members",
-      "Teachers/therapists",
-      "Friends/peers",
-      "Medical professionals",
-      "Various people"
-    ]
-  },
-  {
-    id: 11,
-    label: "What are your main interests or topics?",
-    type: 'single',
-    options: [
-      "Sports and activities",
-      "Entertainment (TV, movies, music)",
-      "School/work topics",
-      "Medical/health needs",
-      "Social conversation"
-    ]
-  },
-  {
-    id: 12,
-    label: "How do you prefer to learn new things?",
-    type: 'single',
-    options: [
-      "Visual demonstrations",
-      "Step-by-step instructions",
-      "Trial and error",
-      "Guided practice",
-      "Independent exploration"
-    ]
-  },
-  {
-    id: 13,
-    label: "What level of vocabulary do you need?",
-    type: 'single',
-    options: [
-      "Basic words and phrases",
-      "Everyday conversation",
-      "Academic/professional",
-      "Complex thoughts and ideas",
-      "Mix of all levels"
-    ]
-  },
-  {
-    id: 14,
-    label: "Do you need multilingual support?",
-    type: 'single',
-    options: [
-      "English only",
-      "Spanish and English",
-      "Other bilingual needs",
-      "Multiple languages",
-      "Not sure yet"
-    ]
-  },
-  {
-    id: 15,
-    label: "How important is speed of communication?",
-    type: 'single',
-    options: [
-      "Accuracy is more important",
-      "Balance of speed and accuracy",
-      "Speed is very important",
-      "Depends on the situation",
-      "Not sure"
-    ]
-  },
-  {
-    id: 16,
-    label: "Do you need word prediction?",
-    type: 'single',
-    options: [
-      "Yes, very helpful",
-      "Sometimes useful",
-      "Not sure what this is",
-      "No, prefer full selection",
-      "Let me try both"
-    ]
-  },
-  {
-    id: 17,
-    label: "How do you handle emotions in communication?",
-    type: 'single',
-    options: [
-      "Need help expressing feelings",
-      "Can express basic emotions",
-      "Want nuanced emotional vocabulary",
-      "Prefer practical communication",
-      "Varies by situation"
-    ]
-  },
-  {
-    id: 18,
-    label: "What backup communication methods do you use?",
-    type: 'single',
-    options: [
-      "Gestures and body language",
-      "Writing or drawing",
-      "Picture cards",
-      "Simple signs",
-      "Multiple methods"
-    ]
-  },
-  {
-    id: 19,
-    label: "How much customization do you want?",
-    type: 'single',
-    options: [
-      "Keep it simple",
-      "Some personalization",
-      "Moderate customization",
-      "Highly customized",
-      "Let others set it up"
-    ]
-  },
-  {
-    id: 20,
-    label: "What time of day will you use this most?",
-    type: 'single',
-    options: [
-      "Morning routine",
-      "During school/work",
-      "Evening/dinner time",
-      "Throughout the day",
-      "Emergency situations"
-    ]
-  },
-  {
-    id: 21,
-    label: "Do you need help with social interactions?",
-    type: 'single',
-    options: [
-      "Greetings and social basics",
-      "Asking questions",
-      "Sharing information",
-      "Making friends",
-      "All social communication"
-    ]
-  },
-  {
-    id: 22,
-    label: "How do you prefer to navigate the app?",
-    type: 'single',
-    options: [
-      "Simple menu structure",
-      "Category-based navigation",
-      "Search function",
-      "Recent/favorites",
-      "Multiple navigation options"
-    ]
-  },
-  {
-    id: 23,
-    label: "What size buttons work best for you?",
-    type: 'single',
-    options: [
-      "Small buttons (more on screen)",
-      "Medium buttons",
-      "Large buttons",
-      "Extra large buttons",
-      "Let me adjust size"
-    ]
-  },
-  {
-    id: 24,
-    label: "Do you need help with grammar?",
-    type: 'single',
-    options: [
-      "Grammar not important",
-      "Basic sentence structure",
-      "Proper grammar help",
-      "Advanced grammar features",
-      "Depends on situation"
-    ]
-  },
-  {
-    id: 25,
-    label: "How do you want to save favorite phrases?",
-    type: 'single',
-    options: [
-      "Quick access buttons",
-      "Favorites menu",
-      "Custom categories",
-      "Recent phrases list",
-      "Multiple saving options"
-    ]
-  },
-  {
-    id: 26,
-    label: "What level of support do you need?",
-    type: 'single',
-    options: [
-      "Minimal - I can figure it out",
-      "Some guidance appreciated",
-      "Regular support needed",
-      "Extensive help required",
-      "Support from family/team"
-    ]
-  },
-  {
-    id: 27,
-    label: "How important is privacy to you?",
-    type: 'single',
-    options: [
-      "Very important",
-      "Somewhat important",
-      "Not very concerned",
-      "Depends on the content",
-      "Let others decide"
-    ]
-  },
-  {
-    id: 28,
-    label: "Do you want progress tracking?",
-    type: 'single',
-    options: [
-      "Yes, detailed progress",
-      "Basic usage statistics",
-      "Simple goal tracking",
-      "No tracking needed",
-      "Let family/team track"
-    ]
-  },
-  {
-    id: 29,
-    label: "What motivates you to communicate?",
-    type: 'single',
-    options: [
-      "Meeting basic needs",
-      "Social connections",
-      "Learning and growth",
-      "Independence",
-      "All of these"
-    ]
-  },
-  {
-    id: 30,
-    label: "How often do you expect to use this?",
-    type: 'single',
-    options: [
-      "Multiple times daily",
-      "Daily",
-      "Several times per week",
-      "Weekly",
-      "As needed"
-    ]
-  },
-  {
-    id: 31,
-    label: "How would you like your communication board organized?",
-    type: 'single',
-    options: [
-      "Most used words first",
-      "Organized by clear categories", 
-      "Mix of both approaches"
+      "🏫 Yes, at school",
+      "🏠 Yes, at home",
+      "🌳 Yes, outside (park, shop)",
+      "🔒 No, always the same"
     ]
   }
 ];

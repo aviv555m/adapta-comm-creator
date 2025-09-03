@@ -149,6 +149,13 @@ const gridDesktopClass = 'grid-cols-3';
   return (
     <div className="app-container">
       <div className="app-card max-w-6xl">
+        {/* Welcome Message */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-lg text-blue-800 text-center">
+            🌟 Welcome! Please answer the questions to set up your communication board
+          </p>
+        </div>
+        
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -169,12 +176,19 @@ const gridDesktopClass = 'grid-cols-3';
             <Button
               variant="default"
               className="bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() =>
-                toast({
-                  title: t('aiAdapt'),
-                  description: '🤖 Coming soon: auto-tune your board based on usage.',
-                })
-              }
+              onClick={() => {
+                if (settings.ollamaUrl && settings.ollamaModel) {
+                  toast({
+                    title: t('aiAdapt'),
+                    description: '🤖 AI is ready! Use the chat in the bottom right to customize your board.',
+                  });
+                } else {
+                  toast({
+                    title: 'AI Not Connected',
+                    description: 'Please configure Ollama in settings first.',
+                  });
+                }
+              }}
             >
               <span className="mr-1">🤖</span>
               <Volume2 className="h-4 w-4 mr-1" />
@@ -248,10 +262,15 @@ const gridDesktopClass = 'grid-cols-3';
               <Card className="mt-4">
                 <CardContent className="p-4">
                   <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setCurrentCategory('All')}
+                    variant="default"
+                    className="w-full h-20 text-xl bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => {
+                      setCurrentCategory('All');
+                      speakText(t('categories'));
+                      toast({ title: t('categories'), description: 'Going back to categories', duration: 1500 });
+                    }}
                   >
+                    <span className="text-3xl mr-3">📋</span>
                     ← {t('categories')}
                   </Button>
                 </CardContent>

@@ -84,7 +84,46 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {
-    // Enhanced AI chat that works locally without API dependency
+    // Try Ollama first, fallback to local processing
+    try {
+      if (currentSettings.ollamaUrl && currentSettings.ollamaModel) {
+        const ollamaResponse = await fetch(`${currentSettings.ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: currentSettings.ollamaModel,
+            messages: [
+              {
+                role: 'system',
+                content: `You are an AAC (Augmentative and Alternative Communication) assistant. Help users customize their communication board. You can modify these settings: tileSize (1-10), voiceRate (0.5-2), voicePitch (0.5-2), highContrast (true/false), showLabels (true/false), showEmoji (true/false), showGazeDot (true/false), enabledCategories (array). Respond with helpful advice and if making changes, mention them clearly. Current settings: ${JSON.stringify(currentSettings)}`
+              },
+              {
+                role: 'user', 
+                content: message
+              }
+            ],
+            stream: false
+          })
+        });
+
+        if (ollamaResponse.ok) {
+          const data = await ollamaResponse.json();
+          const aiResponse = data.message?.content || data.response || 'I processed your request!';
+          
+          // Parse any settings changes from AI response
+          const settingsUpdate = parseSettingsFromResponse(aiResponse, message);
+          
+          return {
+            message: aiResponse,
+            settings: Object.keys(settingsUpdate).length > 0 ? settingsUpdate : undefined
+          };
+        }
+      }
+    } catch (error) {
+      console.log('Ollama not available, using local processing');
+    }
+
+    // Fallback to local processing
     const text = message.trim();
     const lowercaseMsg = text.toLowerCase();
     let responseMessage = '';
@@ -301,6 +340,30 @@ What would you like help with?`;
       message: responseMessage,
       settings: Object.keys(settingsUpdate).length > 0 ? settingsUpdate : undefined,
     };
+  };
+
+  const parseSettingsFromResponse = (response: string, originalMessage: string): Partial<BoardSettings> => {
+    const settings: Partial<BoardSettings> = {};
+    const lowerMsg = originalMessage.toLowerCase();
+    
+    // Parse common setting changes from user message
+    if (/(bigger|larger|large)/.test(lowerMsg) && /tile/.test(lowerMsg)) {
+      settings.tileSize = 8;
+    } else if (/(smaller|small)/.test(lowerMsg) && /tile/.test(lowerMsg)) {
+      settings.tileSize = 3;
+    }
+    
+    if (/(faster|speed up)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
+      settings.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
+    } else if (/(slower|slow down)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
+      settings.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
+    }
+    
+    if (/high contrast/.test(lowerMsg)) {
+      settings.highContrast = true;
+    }
+    
+    return settings;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
