@@ -24,7 +24,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentS
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi! I'm your AAC board assistant. I can help you customize your board. Try things like:\n\n• 'Make the tiles bigger'\n• 'Change the voice speed to slower'\n• 'Use high contrast mode'\n• 'Show 4 columns' or 'use 2 columns on mobile'\n• 'Hide labels' / 'Show emojis'\n• 'Hide the gaze dot'",
+      content: "שלום! אני העוזר החכם של לוח התקשורת שלך. אני יכול לעזור לך להתאים את הלוח. נסה דברים כמו:\n\n• 'תעשה את הכפתורים יותר גדולים'\n• 'תשנה את מהירות הקול לאטי יותר'\n• 'תשתמש במצב ניגודיות גבוהה'\n• 'תראה 4 עמודות' או 'תשתמש ב-2 עמודות בנייד'\n• 'תסתיר תוויות' / 'תראה אמוג\'ים'\n• 'תסתיר את נקודת המבט'",
       isUser: false,
       timestamp: new Date()
     }
@@ -391,10 +391,10 @@ What would you like help with?`;
 
   if (!isOpen) {
     return (
-      <Button
+        <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
-        title="AI Assistant"
+        className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
+        title="עוזר חכם"
       >
         <MessageCircle className="h-6 w-6" />
       </Button>
@@ -402,11 +402,11 @@ What would you like help with?`;
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-[520px] h-[640px] shadow-2xl">
+    <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[520px] h-[640px] shadow-2xl">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          AI Board Assistant
+          עוזר לוח חכם
         </CardTitle>
         <Button
           variant="ghost"
@@ -455,7 +455,7 @@ What would you like help with?`;
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Tell me how to customize your board..."
+            placeholder="ספר לי איך להתאים את הלוח שלך..."
             className="flex-1"
             disabled={isProcessing}
           />

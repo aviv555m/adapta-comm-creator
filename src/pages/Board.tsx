@@ -328,7 +328,7 @@ const gridDesktopClass = 'grid-cols-3';
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{t('echoesBoard')}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{language === 'he' ? t('echoesBoard2') : t('echoesBoard')}</h1>
             <p className="text-muted-foreground">{t('layout')}: {boardConfig.layout}</p>
           </div>
           <div className="flex space-x-2">
@@ -412,11 +412,10 @@ const gridDesktopClass = 'grid-cols-3';
         {/* Full Screen Board Area */}
         <div className="w-full min-h-[80vh]">
           {currentCategory === 'All' ? (
-            // Show Categories as full screen main tiles with descriptions
+            // Show Categories as full screen main tiles without descriptions
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
               {availableCategories.map((category) => {
                 const categoryName = t('categoryNames', category);
-                const categoryDescription = getCategoryDescription(category);
                 return (
                   <Button
                     key={category}
@@ -427,16 +426,13 @@ const gridDesktopClass = 'grid-cols-3';
                       speakText(categoryName);
                       toast({ title: categoryName, description: t('speakingNow'), duration: 1500 });
                     }}
-                    title={`${categoryName} - ${categoryDescription}`}
+                    title={categoryName}
                   >
                     <span className="text-9xl mb-4 leading-none">
                       {getCategoryEmoji(category)}
                     </span>
-                    <span className="text-lg font-bold leading-tight text-center break-words px-2 mb-2">
+                    <span className="text-lg font-bold leading-tight text-center break-words px-2">
                       {categoryName}
-                    </span>
-                    <span className="text-sm text-muted-foreground leading-tight text-center px-2">
-                      {categoryDescription}
                     </span>
                   </Button>
                 );
@@ -458,7 +454,7 @@ const gridDesktopClass = 'grid-cols-3';
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-4xl">📋</span>
                   <span className="text-xl font-bold">
-                    {language === 'he' ? 'חזור לקטגוריות →' : '← Back to Categories'}
+                    {language === 'he' ? '→ חזור לקטגוריות' : 'Back to Categories ←'}
                   </span>
                 </div>
               </Button>
@@ -480,6 +476,7 @@ const gridDesktopClass = 'grid-cols-3';
                       }`}
                       onClick={() => handleTileClick(tile)}
                       title={`${simpleLabel} - ${tileDescription}`}
+                      aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
                         <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>

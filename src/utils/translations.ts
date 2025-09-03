@@ -26,6 +26,7 @@ export interface Translations {
   tapTileFirst: string;
   returningToCategories: string;
   echoesBoard: string;
+  echoesBoard2: string;
   layout: string;
   
   // Board Data
