@@ -702,16 +702,16 @@ What would you like to improve?`;
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
+        className="fixed bottom-4 right-4 z-50 rounded-full w-16 h-16 shadow-lg bg-primary hover:bg-primary/90"
         title={language === 'he' ? 'עוזר חכם' : 'Smart Assistant'}
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle className="h-8 w-8" />
       </Button>
     );
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-[520px] h-[640px] shadow-2xl">
+    <Card className="fixed bottom-4 right-4 z-50 w-[680px] h-[780px] shadow-2xl">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />

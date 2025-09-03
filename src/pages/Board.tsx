@@ -253,34 +253,34 @@ const gridDesktopClass = 'grid-cols-3';
             <Button
               variant="outline"
               onClick={toggleLanguage}
-              className="secondary-button"
+              className="secondary-button h-12 px-6 text-lg"
               title="Toggle Language"
             >
-              <Languages className="h-4 w-4 mr-1" />
+              <Languages className="h-5 w-5 mr-2" />
               {language === 'en' ? 'עברית' : 'English'}
             </Button>
             <Button
               variant="default"
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-blue-600 text-white hover:bg-blue-700 h-12 px-6 text-lg"
               onClick={() => setSettingsOpen(true)}
               title="Open settings"
             >
-              <span className="mr-1">⚙️</span>
-              <Settings className="h-4 w-4 mr-1" />
+              <span className="mr-2">⚙️</span>
+              <Settings className="h-5 w-5 mr-2" />
               {t('settings')}
             </Button>
             <Button
               variant="default"
-              className="bg-purple-600 text-white hover:bg-purple-700"
+              className="bg-purple-600 text-white hover:bg-purple-700 h-12 px-6 text-lg"
               onClick={() => setAiControlPanelOpen(true)}
             >
-              <span className="mr-1">🤖</span>
-              <Volume2 className="h-4 w-4 mr-1" />
+              <span className="mr-2">🤖</span>
+              <Volume2 className="h-5 w-5 mr-2" />
               {t('aiAdapt')}
             </Button>
             <Button
               variant="default"
-              className="bg-green-600 text-white hover:bg-green-700"
+              className="bg-green-600 text-white hover:bg-green-700 h-12 px-6 text-lg"
               onClick={() => {
                 if (selectedTile) {
                   const translatedText = t('boardData', selectedTile.text) || selectedTile.text;
@@ -293,8 +293,8 @@ const gridDesktopClass = 'grid-cols-3';
                 }
               }}
             >
-              <span className="mr-1">▶️</span>
-              <Mic className="h-4 w-4 mr-1" />
+              <span className="mr-2">▶️</span>
+              <Mic className="h-5 w-5 mr-2" />
               {t('ready')}
             </Button>
             <Button
@@ -303,13 +303,13 @@ const gridDesktopClass = 'grid-cols-3';
                 active 
                   ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'bg-orange-600 text-white hover:bg-orange-700'
-              } ${state.isCalibrating ? 'animate-pulse' : ''}`}
+              } ${state.isCalibrating ? 'animate-pulse' : ''} h-12 px-6 text-lg`}
               onClick={handleEyeTrackingToggle}
               disabled={state.isCalibrating}
               title={active ? 'Stop eye tracking' : 'Start eye tracking'}
             >
-              <span className="mr-1">👁️</span>
-              {active ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+              <span className="mr-2">👁️</span>
+              {active ? <EyeOff className="h-5 w-5 mr-2" /> : <Eye className="h-5 w-5 mr-2" />}
               {state.isCalibrating ? t('calibrating') : active ? t('eyeOff') : t('eyeTrack')}
             </Button>
           </div>
@@ -350,7 +350,7 @@ const gridDesktopClass = 'grid-cols-3';
               {/* Back to Categories Button in the middle */}
               <Button
                 variant="default"
-                className="h-24 w-80 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
+                className="h-28 w-96 bg-blue-600 text-white hover:bg-blue-700 px-6 py-4 shadow-lg"
                 onClick={() => {
                   setCurrentCategory('All');
                   speakText(t('backToCategories'));
@@ -375,43 +375,25 @@ const gridDesktopClass = 'grid-cols-3';
                   // Get usage count for this tile
                   const usageCount = usage[tile.id]?.count || 0;
                   
-                  // Calculate dynamic styling based on usage frequency
+                  // Calculate dynamic styling based on usage frequency (max 2 steps)
                   const getUsageBasedStyling = () => {
-                    if (usageCount >= 30) {
-                      // Super frequently used - massive and brightest
+                    if (usageCount >= 10) {
+                      // Step 2: Frequently used - bigger and brighter
                       return {
-                        size: 'min-h-[320px] scale-125',
-                        glow: 'shadow-xl shadow-primary/70 border-primary border-4',
-                        brightness: 'bg-primary/30 hover:bg-primary/40',
-                        emoji: 'text-[12rem]',
-                        text: 'text-4xl'
-                      };
-                    } else if (usageCount >= 20) {
-                      // Extra frequently used - very big and bright
-                      return {
-                        size: 'min-h-[300px] scale-120',
-                        glow: 'shadow-xl shadow-primary/60 border-primary border-3',
-                        brightness: 'bg-primary/25 hover:bg-primary/35',
-                        emoji: 'text-[10rem]',
-                        text: 'text-4xl'
-                      };
-                    } else if (usageCount >= 10) {
-                      // Very frequently used - biggest and brightest
-                      return {
-                        size: 'min-h-[280px] scale-115',
+                        size: 'min-h-[240px] scale-110',
                         glow: 'shadow-lg shadow-primary/50 border-primary',
                         brightness: 'bg-primary/20 hover:bg-primary/30',
-                        emoji: 'text-[8rem]',
-                        text: 'text-3xl'
+                        emoji: 'text-8xl',
+                        text: 'text-2xl'
                       };
                     } else if (usageCount >= 5) {
-                      // Frequently used - medium enhancement
+                      // Step 1: Medium enhancement
                       return {
-                        size: 'min-h-[240px] scale-105',
+                        size: 'min-h-[220px] scale-105',
                         glow: 'shadow-md shadow-primary/30 border-primary/70',
                         brightness: 'bg-primary/10 hover:bg-primary/20',
-                        emoji: 'text-9xl',
-                        text: 'text-2xl'
+                        emoji: 'text-7xl',
+                        text: 'text-xl'
                       };
                     } else if (usageCount >= 2) {
                       // Moderately used - slight enhancement
@@ -446,7 +428,7 @@ const gridDesktopClass = 'grid-cols-3';
                           : (settings.highContrast ? 'border-foreground hover:bg-accent' : `border-border hover:border-primary hover:bg-accent/20 ${styling.brightness ? '' : 'hover:bg-accent/20'}`)
                       }`}
                       onClick={() => handleTileClick(tile)}
-                      title={`${simpleLabel} - ${tileDescription} (Used ${usageCount} times)`}
+                      title={`${simpleLabel} - ${tileDescription}`}
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
@@ -460,11 +442,6 @@ const gridDesktopClass = 'grid-cols-3';
                           <span className="text-xs text-muted-foreground leading-tight text-center px-2">
                             {tileDescription}
                           </span>
-                          {usageCount > 0 && (
-                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full mt-2">
-                              {usageCount} clicks
-                            </span>
-                          )}
                         </>
                       )}
                     </Button>
