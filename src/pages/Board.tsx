@@ -103,6 +103,42 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     return fromProfile || questions.find(q => q.id === 11)?.value || 'Not specified';
   };
 
+  const getCategoryDescription = (category: string): string => {
+    const descriptions: Record<string, string> = {
+      'Communication': 'Express feelings, needs, and basic requests',
+      'Basic Needs': 'Essential daily activities and requirements',
+      'People': 'Family members, friends, and important people',
+      'Actions': 'Things you do and activities you enjoy',
+      'Feelings': 'Emotions and how you feel',
+      'Food': 'Meals, snacks, and favorite foods',
+      'Colors': 'Different colors and descriptions',
+      'Numbers': 'Numbers and counting activities',
+      'Animals': 'Pet names and animal sounds',
+      'Places': 'Locations you go to regularly',
+      'Objects': 'Things you use and see around you',
+      'Toys': 'Games and fun activities'
+    };
+    return descriptions[category] || 'Tap to explore this category';
+  };
+
+  const getTileDescription = (tile: BoardTile): string => {
+    const descriptions: Record<string, string> = {
+      'hello': 'Greeting others politely',
+      'please': 'Making polite requests',
+      'thank you': 'Showing gratitude',
+      'yes': 'Agreeing or confirming',
+      'no': 'Disagreeing or refusing',
+      'help': 'Asking for assistance',
+      'more': 'Requesting additional items',
+      'stop': 'Asking to pause or end activity',
+      'finished': 'Indicating completion',
+      'want': 'Expressing desires',
+      'need': 'Expressing requirements',
+      'like': 'Showing preference'
+    };
+    return descriptions[tile.text.toLowerCase()] || `Use this to say "${tile.text}"`;
+  };
+
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(text);
@@ -233,126 +269,95 @@ const gridDesktopClass = 'grid-cols-3';
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - User Info Only */}
-          <div className="lg:col-span-1">
-            {/* User Info Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t('profile')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {profile.name ? (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">{t('name')}</p>
-                    <p className="text-sm">{profile.name}</p>
-                  </div>
-                ) : null}
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{t('communicationStyle')}</p>
-                  <p className="text-sm">{getCommunicationStyle()}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{t('interests')}</p>
-                  <p className="text-sm">{getUserInterests()}</p>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Back to Categories Button - Fixed Position at Top Left when viewing tiles */}
+        {currentCategory !== 'All' && (
+          <div className="fixed top-4 left-4 z-10">
+            <Button
+              variant="default"
+              className="h-20 w-32 bg-blue-600 text-white hover:bg-blue-700 px-2 py-3 shadow-lg"
+              onClick={() => {
+                setCurrentCategory('All');
+                speakText(t('categories'));
+                toast({ title: t('categories'), description: 'Going back to categories', duration: 1500 });
+              }}
+            >
+              <div className="flex flex-col items-center justify-center gap-1">
+                <span className="text-3xl">📋</span>
+                <span className="text-sm font-bold leading-tight text-center break-words">
+                  ← {t('categories')}
+                </span>
+              </div>
+            </Button>
+          </div>
+        )}
 
-            {/* Back to Categories Button when viewing tiles */}
-            {currentCategory !== 'All' && (
-              <Card className="mt-4">
-                <CardContent className="p-4">
+        {/* Full Screen Board Area */}
+        <div className="w-full min-h-[80vh]">
+          {currentCategory === 'All' ? (
+            // Show Categories as full screen main tiles with descriptions
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+              {availableCategories.map((category) => {
+                const categoryName = t('categoryNames', category);
+                const categoryDescription = getCategoryDescription(category);
+                return (
                   <Button
-                    variant="default"
-                    className="w-full h-20 bg-blue-600 text-white hover:bg-blue-700 px-2 py-3"
+                    key={category}
+                    variant="outline"
+                    className="p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20 min-h-[300px]"
                     onClick={() => {
-                      setCurrentCategory('All');
-                      speakText(t('categories'));
-                      toast({ title: t('categories'), description: 'Going back to categories', duration: 1500 });
+                      setCurrentCategory(category);
+                      speakText(categoryName);
+                      toast({ title: categoryName, description: 'Speaking now', duration: 1500 });
                     }}
+                    title={`${categoryName} - ${categoryDescription}`}
                   >
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <span className="text-2xl">📋</span>
-                      <span className="text-xs font-bold leading-tight text-center break-words">
-                        ← {t('categories')}
-                      </span>
-                    </div>
+                    <span className="text-9xl mb-4 leading-none">
+                      {getCategoryEmoji(category)}
+                    </span>
+                    <span className="text-lg font-bold leading-tight text-center break-words px-2 mb-2">
+                      {categoryName}
+                    </span>
+                    <span className="text-sm text-muted-foreground leading-tight text-center px-2">
+                      {categoryDescription}
+                    </span>
                   </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Main Board Area */}
-          <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {currentCategory === 'All' ? t('categories') : t('categoryNames', currentCategory)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {currentCategory === 'All' ? (
-                  // Show Categories as main tiles
-                  <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
-                    {availableCategories.map((category) => {
-                      const categoryName = t('categoryNames', category);
-                      return (
-                        <Button
-                          key={category}
-                          variant="outline"
-                          className="p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20"
-                          style={tileHeightStyle}
-                          onClick={() => {
-                            setCurrentCategory(category);
-                            speakText(categoryName);
-                            toast({ title: categoryName, description: 'Speaking now', duration: 1500 });
-                          }}
-                          title={categoryName}
-                        >
-                          <span className="text-8xl mb-2 leading-none">
-                            {getCategoryEmoji(category)}
-                          </span>
-                          <span className="text-xs font-medium leading-tight opacity-80 text-center break-words px-1">
-                            {categoryName}
-                          </span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  // Show exactly 9 Tiles for selected category in 3x3 grid
-                  <div className="grid grid-cols-3 gap-3">
-                    {filteredTiles.map((tile) => {
-                      const translatedText = t('boardData', tile.text) || tile.text;
-                      return (
-                        <Button
-                          key={tile.id}
-                          variant="outline"
-                          className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center ${
-                            selectedTile?.id === tile.id 
-                              ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                              : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                          }`}
-                          style={tileHeightStyle}
-                          onClick={() => handleTileClick(tile)}
-                          title={translatedText}
-                        >
-                          {settings.showEmoji !== false && tile.emoji && (
-                            <span className="text-8xl mb-2 leading-none">{tile.emoji}</span>
-                          )}
-                          {settings.showLabels !== false && (
-                            <span className="text-[10px] font-medium leading-tight opacity-80">{translatedText}</span>
-                          )}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Show exactly 9 Tiles for selected category in full screen 3x3 grid
+            <div className="grid grid-cols-3 gap-6 p-6 min-h-[80vh]">
+              {filteredTiles.map((tile) => {
+                const translatedText = t('boardData', tile.text) || tile.text;
+                const tileDescription = getTileDescription(tile);
+                return (
+                  <Button
+                    key={tile.id}
+                    variant="outline"
+                    className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[200px] ${
+                      selectedTile?.id === tile.id 
+                        ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                        : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                    }`}
+                    onClick={() => handleTileClick(tile)}
+                    title={`${translatedText} - ${tileDescription}`}
+                  >
+                    {settings.showEmoji !== false && tile.emoji && (
+                      <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
+                    )}
+                    {settings.showLabels !== false && (
+                      <>
+                        <span className="text-lg font-medium leading-tight text-center mb-2">{translatedText}</span>
+                        <span className="text-sm text-muted-foreground leading-tight text-center px-2">
+                          {tileDescription}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Bottom Actions */}
