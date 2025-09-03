@@ -433,9 +433,9 @@ What would you like help with?`;
 
   if (!isOpen) {
     return (
-        <Button
+      <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
+        className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
         title="עוזר חכם"
       >
         <MessageCircle className="h-6 w-6" />
@@ -444,7 +444,7 @@ What would you like help with?`;
   }
 
   return (
-    <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[520px] h-[640px] shadow-2xl">
+    <Card className="fixed bottom-4 right-4 z-50 w-[520px] h-[640px] shadow-2xl">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />
