@@ -122,115 +122,12 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
   };
 
   const getSimpleLabel = (tile: BoardTile): string => {
-    // Create simple 1-2 word labels that match the emoji/symbol
-    const labelMap: Record<string, string> = {
-      // Core communication
-      '🆘': 'Help',
-      '🙏': 'Please', 
-      '🙇': 'Thank You',
-      '👍': 'Yes',
-      '👎': 'No', 
-      '✋': 'Stop',
-      '➕': 'More',
-      '✅': 'Done',
-      
-      // Basic needs
-      '🍽️': 'Hungry',
-      '🥤': 'Thirsty', 
-      '🚻': 'Bathroom',
-      '😴': 'Tired',
-      '🔥': 'Hot',
-      '🥶': 'Cold',
-      '💊': 'Medicine',
-      '🛏️': 'Sleep',
-      
-      // Food & Drinks
-      '💧': 'Water',
-      '🍞': 'Bread',
-      '🍎': 'Apple', 
-      '🥛': 'Milk',
-      '☕': 'Coffee',
-      '🥪': 'Sandwich',
-      '🍕': 'Pizza',
-      '🍦': 'Ice Cream',
-      
-      // Emotions
-      '😊': 'Happy',
-      '😢': 'Sad',
-      '😠': 'Angry',
-      '😨': 'Scared',
-      '🤩': 'Excited',
-      '😕': 'Confused',
-      '🥰': 'Proud',
-      '😟': 'Worried',
-      
-      // Actions
-      '🏃': 'Go',
-      '🧍': 'Stay',
-      '🎮': 'Play',
-      '🛌': 'Rest',
-      '📚': 'Read',
-      '📺': 'Watch',
-      '🎵': 'Listen',
-      '🎨': 'Draw',
-      
-      // People  
-      '👩': 'Mom',
-      '👨': 'Dad',
-      '👩‍🏫': 'Teacher',
-      '👫': 'Friend',
-      '👩‍⚕️': 'Doctor',
-      '👨‍👩‍👧‍👦': 'Family',
-      
-      // Places
-      '🏠': 'Home',
-      '🏫': 'School', 
-      '🏞️': 'Park',
-      '🏪': 'Store',
-      '🏥': 'Hospital',
-      
-      // Animals
-      '🐕': 'Dog',
-      '🐱': 'Cat',
-      '🐦': 'Bird',
-      '🐠': 'Fish',
-      '🐎': 'Horse',
-      '🐰': 'Rabbit',
-      
-      // Colors
-      '🔴': 'Red',
-      '🔵': 'Blue',
-      '🟢': 'Green', 
-      '🟡': 'Yellow',
-      '🟣': 'Purple',
-      '🟠': 'Orange',
-      
-      // Numbers
-      '1️⃣': 'One',
-      '2️⃣': 'Two',
-      '3️⃣': 'Three',
-      '4️⃣': 'Four', 
-      '5️⃣': 'Five',
-      '🔟': 'Ten',
-      
-      // Time
-      '⏰': 'Now',
-      '⏳': 'Later',
-      '📅': 'Today',
-      '🗓️': 'Tomorrow',
-      '🌅': 'Morning',
-      '🌙': 'Night',
-      
-      // Weather
-      '☀️': 'Sunny',
-      '🌧️': 'Rainy',
-      '☁️': 'Cloudy',
-      '❄️': 'Snowy', 
-      '💨': 'Windy',
-      '🌡️': 'Hot'
-    };
+    // Always get the translated text from the translations system
+    // The emoji stays the same regardless of language
+    const translatedText = t('boardData', tile.text) || tile.text;
     
-    return labelMap[tile.emoji] || tile.text.split(' ').slice(0, 2).join(' ');
+    // For simple labels, use the first 1-2 words of the translated text
+    return translatedText.split(' ').slice(0, 2).join(' ');
   };
 
   const getTileDescription = (tile: BoardTile): string => {
