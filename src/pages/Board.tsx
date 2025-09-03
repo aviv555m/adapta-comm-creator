@@ -20,7 +20,7 @@ const Board = () => {
   const navigate = useNavigate();
   const { questions, resetQuiz } = useQuiz();
   const { toast } = useToast();
-  const { language, t } = useLanguage();
+  const { language, t, toggleLanguage } = useLanguage();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
   const [currentCategory, setCurrentCategory] = useState('Most Used');
   
@@ -279,18 +279,18 @@ const speakText = (text: string) => {
   speechSynthesis.speak(utterance);
 };
 
-const handleTileClick = (tile: BoardTile) => {
-  setSelectedTile(tile);
-  trackTileUsage(tile.id);
-  const translatedText = t('boardData', tile.text) || tile.text;
-  speakText(translatedText);
-  toast({ title: translatedText, description: 'Speaking now', duration: 1500 });
-};
+  const handleTileClick = (tile: BoardTile) => {
+    setSelectedTile(tile);
+    trackTileUsage(tile.id);
+    const translatedText = t('boardData', tile.text) || tile.text;
+    speakText(translatedText);
+    toast({ title: translatedText, description: t('speakingNow'), duration: 1500 });
+  };
 
   const handleEyeTrackingToggle = async () => {
     if (active) {
       stop();
-      toast({ title: '👁️ Eye tracking stopped', description: 'Eye tracking has been disabled.' });
+      toast({ title: t('eyeTrackingStopped'), description: t('eyeTrackingStopped') });
     } else {
       // Open calibration overlay instead of direct calibration
       setCalibrationOpen(true);
@@ -321,17 +321,26 @@ const gridDesktopClass = 'grid-cols-3';
         {/* Welcome Message */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-lg text-blue-800 text-center">
-            🌟 Welcome! Please answer the questions to set up your communication board
+            🌟 {t('welcomeMessage')}
           </p>
         </div>
         
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Echoes Board</h1>
-            <p className="text-muted-foreground">Layout: {boardConfig.layout}</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('echoesBoard')}</h1>
+            <p className="text-muted-foreground">{t('layout')}: {boardConfig.layout}</p>
           </div>
           <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={toggleLanguage}
+              className="secondary-button"
+              title="Toggle Language"
+            >
+              <Languages className="h-4 w-4 mr-1" />
+              {language === 'en' ? 'עברית' : 'English'}
+            </Button>
             <Button
               variant="default"
               className="bg-blue-600 text-white hover:bg-blue-700"
@@ -372,8 +381,8 @@ const gridDesktopClass = 'grid-cols-3';
                   speakText(translatedText);
                 } else {
                   toast({
-                    title: 'No tile selected',
-                    description: 'Tap a tile first, then press Ready.',
+                    title: t('noTileSelected'),
+                    description: t('tapTileFirst'),
                   });
                 }
               }}
@@ -416,7 +425,7 @@ const gridDesktopClass = 'grid-cols-3';
                     onClick={() => {
                       setCurrentCategory(category);
                       speakText(categoryName);
-                      toast({ title: categoryName, description: 'Speaking now', duration: 1500 });
+                      toast({ title: categoryName, description: t('speakingNow'), duration: 1500 });
                     }}
                     title={`${categoryName} - ${categoryDescription}`}
                   >
@@ -442,14 +451,14 @@ const gridDesktopClass = 'grid-cols-3';
                 className="h-24 w-80 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
                 onClick={() => {
                   setCurrentCategory('All');
-                  speakText('Back to Categories');
-                  toast({ title: 'Back to Categories', description: 'Returning to main categories', duration: 1500 });
+                  speakText(t('backToCategories'));
+                  toast({ title: t('backToCategories'), description: t('returningToCategories'), duration: 1500 });
                 }}
               >
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-4xl">📋</span>
                   <span className="text-xl font-bold">
-                    ← Back to Categories
+                    {language === 'he' ? 'חזור לקטגוריות →' : '← Back to Categories'}
                   </span>
                 </div>
               </Button>
@@ -539,8 +548,8 @@ const gridDesktopClass = 'grid-cols-3';
             setCalibrationOpen(false);
             if (state.isCalibrated) {
               toast({ 
-                title: '👁️ Eye tracking ready!', 
-                description: 'Calibration completed successfully. The red dot shows where you\'re looking.' 
+                title: t('eyeTrackingReady'), 
+                description: t('calibrationCompleted')
               });
             }
           }}
