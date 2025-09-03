@@ -40,6 +40,9 @@ const Board = () => {
   // Usage tracking and behavior analytics
   const { usage, trackTileUsage, getMostUsedTiles } = useUsageTracking();
   const { trackInteraction, startSession, endSession } = useBehaviorAnalytics();
+  
+  // Timer to reset button scaling every 20 seconds
+  const [scalingReset, setScalingReset] = useState(0);
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -233,6 +236,15 @@ const gridDesktopClass = 'grid-cols-3';
     return () => endSession();
   }, [startSession, endSession]);
 
+  // Timer to reset button scaling every 20 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setScalingReset(prev => prev + 1);
+    }, 20000); // 20 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="app-container">
       <div className="app-card max-w-6xl">
@@ -375,9 +387,12 @@ const gridDesktopClass = 'grid-cols-3';
                   // Get usage count for this tile
                   const usageCount = usage[tile.id]?.count || 0;
                   
-                  // Calculate dynamic styling based on usage frequency (max 2 steps)
+                  // Calculate dynamic styling based on usage frequency (max 2 steps, reset every 20s)
                   const getUsageBasedStyling = () => {
-                    if (usageCount >= 10) {
+                    // Reset scaling effect every 20 seconds
+                    const effectiveUsageCount = scalingReset > 0 ? Math.max(0, usageCount - (scalingReset * 5)) : usageCount;
+                    
+                    if (effectiveUsageCount >= 10) {
                       // Step 2: Frequently used - bigger and brighter
                       return {
                         size: 'min-h-[240px] scale-110',
@@ -386,7 +401,7 @@ const gridDesktopClass = 'grid-cols-3';
                         emoji: 'text-8xl',
                         text: 'text-2xl'
                       };
-                    } else if (usageCount >= 5) {
+                    } else if (effectiveUsageCount >= 5) {
                       // Step 1: Medium enhancement
                       return {
                         size: 'min-h-[220px] scale-105',
@@ -394,15 +409,6 @@ const gridDesktopClass = 'grid-cols-3';
                         brightness: 'bg-primary/10 hover:bg-primary/20',
                         emoji: 'text-7xl',
                         text: 'text-xl'
-                      };
-                    } else if (usageCount >= 2) {
-                      // Moderately used - slight enhancement
-                      return {
-                        size: 'min-h-[220px]',
-                        glow: 'shadow-sm shadow-primary/20 border-primary/40',
-                        brightness: 'bg-primary/5 hover:bg-primary/10',
-                        emoji: 'text-8xl',
-                        text: 'text-2xl'
                       };
                     } else {
                       // Default styling for new/rarely used tiles
@@ -422,7 +428,7 @@ const gridDesktopClass = 'grid-cols-3';
                     <Button
                       key={tile.id}
                       variant="outline"
-                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all duration-300 flex flex-col items-center justify-center ${styling.size} ${styling.glow} ${styling.brightness} ${
+                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all duration-500 ease-in-out flex flex-col items-center justify-center ${styling.size} ${styling.glow} ${styling.brightness} ${
                         selectedTile?.id === tile.id 
                           ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
                           : (settings.highContrast ? 'border-foreground hover:bg-accent' : `border-border hover:border-primary hover:bg-accent/20 ${styling.brightness ? '' : 'hover:bg-accent/20'}`)
