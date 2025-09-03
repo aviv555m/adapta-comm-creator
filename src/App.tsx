@@ -3,11 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Quiz from "./pages/Quiz";
-import Results from "./pages/Results";
-import Board from "./pages/Board";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import BoardPage from "./pages/BoardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,27 +17,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Quiz />
-            </ProtectedRoute>
-          } />
-          <Route path="/quiz" element={
-            <ProtectedRoute>
-              <Quiz />
-            </ProtectedRoute>
-          } />
-          <Route path="/results" element={
-            <ProtectedRoute>
-              <Results />
-            </ProtectedRoute>
-          } />
-          <Route path="/board" element={
-            <ProtectedRoute>
-              <Board />
-            </ProtectedRoute>
-          } />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/board" element={<BoardPage />} />
+          <Route path="/" element={<LoginPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
