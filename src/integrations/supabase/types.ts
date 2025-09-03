@@ -80,36 +80,54 @@ export type Database = {
       }
       profile_settings: {
         Row: {
+          age_group: string | null
           ai_adapt_enabled: boolean | null
+          animations_enabled: boolean | null
           button_size: number | null
           created_at: string | null
+          dominant_hand: string | null
           font_size: number | null
           high_contrast: boolean | null
           id: string
           input_method: string | null
           language: string | null
+          nickname: string | null
+          onboarding_completed: boolean | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          age_group?: string | null
           ai_adapt_enabled?: boolean | null
+          animations_enabled?: boolean | null
           button_size?: number | null
           created_at?: string | null
+          dominant_hand?: string | null
           font_size?: number | null
           high_contrast?: boolean | null
           id?: string
           input_method?: string | null
           language?: string | null
+          nickname?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          age_group?: string | null
           ai_adapt_enabled?: boolean | null
+          animations_enabled?: boolean | null
           button_size?: number | null
           created_at?: string | null
+          dominant_hand?: string | null
           font_size?: number | null
           high_contrast?: boolean | null
           id?: string
           input_method?: string | null
           language?: string | null
+          nickname?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
