@@ -121,6 +121,118 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     return descriptions[category] || 'Tap to explore this category';
   };
 
+  const getSimpleLabel = (tile: BoardTile): string => {
+    // Create simple 1-2 word labels that match the emoji/symbol
+    const labelMap: Record<string, string> = {
+      // Core communication
+      '🆘': 'Help',
+      '🙏': 'Please', 
+      '🙇': 'Thank You',
+      '👍': 'Yes',
+      '👎': 'No', 
+      '✋': 'Stop',
+      '➕': 'More',
+      '✅': 'Done',
+      
+      // Basic needs
+      '🍽️': 'Hungry',
+      '🥤': 'Thirsty', 
+      '🚻': 'Bathroom',
+      '😴': 'Tired',
+      '🔥': 'Hot',
+      '🥶': 'Cold',
+      '💊': 'Medicine',
+      '🛏️': 'Sleep',
+      
+      // Food & Drinks
+      '💧': 'Water',
+      '🍞': 'Bread',
+      '🍎': 'Apple', 
+      '🥛': 'Milk',
+      '☕': 'Coffee',
+      '🥪': 'Sandwich',
+      '🍕': 'Pizza',
+      '🍦': 'Ice Cream',
+      
+      // Emotions
+      '😊': 'Happy',
+      '😢': 'Sad',
+      '😠': 'Angry',
+      '😨': 'Scared',
+      '🤩': 'Excited',
+      '😕': 'Confused',
+      '🥰': 'Proud',
+      '😟': 'Worried',
+      
+      // Actions
+      '🏃': 'Go',
+      '🧍': 'Stay',
+      '🎮': 'Play',
+      '🛌': 'Rest',
+      '📚': 'Read',
+      '📺': 'Watch',
+      '🎵': 'Listen',
+      '🎨': 'Draw',
+      
+      // People  
+      '👩': 'Mom',
+      '👨': 'Dad',
+      '👩‍🏫': 'Teacher',
+      '👫': 'Friend',
+      '👩‍⚕️': 'Doctor',
+      '👨‍👩‍👧‍👦': 'Family',
+      
+      // Places
+      '🏠': 'Home',
+      '🏫': 'School', 
+      '🏞️': 'Park',
+      '🏪': 'Store',
+      '🏥': 'Hospital',
+      
+      // Animals
+      '🐕': 'Dog',
+      '🐱': 'Cat',
+      '🐦': 'Bird',
+      '🐠': 'Fish',
+      '🐎': 'Horse',
+      '🐰': 'Rabbit',
+      
+      // Colors
+      '🔴': 'Red',
+      '🔵': 'Blue',
+      '🟢': 'Green', 
+      '🟡': 'Yellow',
+      '🟣': 'Purple',
+      '🟠': 'Orange',
+      
+      // Numbers
+      '1️⃣': 'One',
+      '2️⃣': 'Two',
+      '3️⃣': 'Three',
+      '4️⃣': 'Four', 
+      '5️⃣': 'Five',
+      '🔟': 'Ten',
+      
+      // Time
+      '⏰': 'Now',
+      '⏳': 'Later',
+      '📅': 'Today',
+      '🗓️': 'Tomorrow',
+      '🌅': 'Morning',
+      '🌙': 'Night',
+      
+      // Weather
+      '☀️': 'Sunny',
+      '🌧️': 'Rainy',
+      '☁️': 'Cloudy',
+      '❄️': 'Snowy', 
+      '💨': 'Windy',
+      '🌡️': 'Hot'
+    };
+    
+    return labelMap[tile.emoji] || tile.text.split(' ').slice(0, 2).join(' ');
+  };
+
   const getTileDescription = (tile: BoardTile): string => {
     const descriptions: Record<string, string> = {
       'hello': 'Greeting others politely',
@@ -328,7 +440,7 @@ const gridDesktopClass = 'grid-cols-3';
                 {filteredTiles.map((tile) => {
                   const translatedText = t('boardData', tile.text) || tile.text;
                   const tileDescription = getTileDescription(tile);
-                  const tileName = translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
+                  const simpleLabel = getSimpleLabel(tile);
                   return (
                     <Button
                       key={tile.id}
@@ -339,15 +451,17 @@ const gridDesktopClass = 'grid-cols-3';
                           : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
                       }`}
                       onClick={() => handleTileClick(tile)}
-                      title={`${tileName} - ${tileDescription}`}
+                      title={`${simpleLabel} - ${tileDescription}`}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
                         <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
-                          <span className="text-xl font-bold leading-tight text-center mb-2">{tileName}</span>
-                          <span className="text-sm text-muted-foreground leading-tight text-center px-2">
+                          <span className="text-2xl font-bold leading-tight text-center mb-2 text-primary">
+                            {simpleLabel}
+                          </span>
+                          <span className="text-xs text-muted-foreground leading-tight text-center px-2">
                             {tileDescription}
                           </span>
                         </>
