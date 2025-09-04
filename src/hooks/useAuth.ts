@@ -1,29 +1,59 @@
-import { useSupabaseAuth } from './useSupabaseAuth';
+import { useState, useEffect } from 'react';
 
-// Re-export Supabase auth with backward compatibility
+interface User {
+  email: string;
+  name?: string;
+}
+
 export const useAuth = () => {
-  const auth = useSupabaseAuth();
-  
-  // Transform Supabase user to match the old interface
-  const user = auth.user ? {
-    email: auth.user.email || '',
-    name: auth.user.user_metadata?.name || auth.user.email?.split('@')[0] || 'User'
-  } : null;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('adaptacomm_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simple validation for demo
+    if (email.includes('@') && password.length >= 8) {
+      const user = { email, name: email.split('@')[0] };
+      setUser(user);
+      localStorage.setItem('adaptacomm_user', JSON.stringify(user));
+      return { success: true };
+    }
+    
+    return { success: false, error: 'Invalid email or password' };
+  };
+
+  const signInWithGoogle = async () => {
+    // Simulate Google OAuth
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const user = { email: 'user@gmail.com', name: 'Google User' };
+    setUser(user);
+    localStorage.setItem('adaptacomm_user', JSON.stringify(user));
+    return { success: true };
+  };
+
+  const signOut = () => {
+    setUser(null);
+    localStorage.removeItem('adaptacomm_user');
+    localStorage.removeItem('echoes_quiz_v1');
+  };
 
   return {
-    ...auth,
     user,
-    // Keep old method signatures for compatibility
-    signIn: async (email: string, password: string) => {
-      const result = await auth.signIn(email, password);
-      return result.error ? { success: false, error: result.error.message } : { success: true };
-    },
-    signInWithGoogle: async () => {
-      const result = await auth.signInWithGoogle();
-      return result.error ? { success: false, error: result.error.message } : { success: true };
-    },
-    signOut: () => {
-      auth.signOut();
-    }
+    loading,
+    signIn,
+    signInWithGoogle,
+    signOut,
+    isAuthenticated: !!user
   };
 };

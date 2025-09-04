@@ -5,7 +5,6 @@ import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DebugComponent } from '@/components/DebugComponent';
 
 const Results = () => {
   const navigate = useNavigate();
@@ -57,14 +56,17 @@ const Results = () => {
   const { warnings, conflicts, suggestions } = checkConfiguration();
 
   const handleGenerateBoard = () => {
-    console.log('Navigating to board page...');
     navigate('/board');
   };
 
   const handleReviewAnswers = () => {
-    console.log('Navigating back to quiz...');
-    // Simply navigate back to quiz - the useQuiz hook will handle the state
-    navigate('/quiz');
+    // Find first unanswered question or go to Q1
+    const firstUnanswered = questions.findIndex(q => q.status === 'unanswered');
+    if (firstUnanswered !== -1) {
+      navigate(`/quiz?question=${firstUnanswered + 1}`);
+    } else {
+      navigate('/quiz');
+    }
   };
 
   return (
@@ -229,9 +231,6 @@ const Results = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Debug Component for testing */}
-        <DebugComponent />
       </div>
     </div>
   );

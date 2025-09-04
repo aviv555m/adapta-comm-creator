@@ -2,33 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { useProviderCheck } from '@/hooks/useProviderCheck';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { toast } from '@/hooks/use-toast';
-import { GoogleProviderModal } from '@/components/GoogleProviderModal';
 
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
   const navigate = useNavigate();
   const { signInWithGoogle, isAuthenticated } = useAuth();
-  const { isGoogleEnabled } = useProviderCheck();
   const { layout } = useResponsiveLayout();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/quiz');
+      navigate('/onboarding');
     }
   }, [isAuthenticated, navigate]);
 
   const handleGoogleSignIn = async () => {
-    if (!isGoogleEnabled) {
-      setShowGoogleModal(true);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -36,10 +27,10 @@ const LoginPage = () => {
       const result = await signInWithGoogle();
       
       if (!result.success) {
-        setError(result.error || 'Login failed');
+        setError('Login failed');
         toast({
           title: "Login Failed",
-          description: result.error || 'Login failed',
+          description: 'Login failed',
           variant: "destructive"
         });
       } else {
@@ -160,10 +151,6 @@ const LoginPage = () => {
         </div>
       </div>
 
-      <GoogleProviderModal 
-        isOpen={showGoogleModal} 
-        onClose={() => setShowGoogleModal(false)} 
-      />
     </div>
   );
 };

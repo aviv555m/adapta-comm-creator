@@ -126,8 +126,8 @@ const BoardPage = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    signOut();
     navigate('/login');
   };
 
