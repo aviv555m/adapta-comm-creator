@@ -82,11 +82,11 @@ const BoardPage = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('profile_settings')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error loading profile settings:', error);
@@ -94,7 +94,7 @@ const BoardPage = () => {
           return;
         }
 
-        if (!data.onboarding_completed) {
+        if (!data?.onboarding_completed) {
           navigate('/onboarding');
           return;
         }
@@ -125,7 +125,7 @@ const BoardPage = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profile_settings')
         .update({ language: languageCode })
         .eq('user_id', user.id);

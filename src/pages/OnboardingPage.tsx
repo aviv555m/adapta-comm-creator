@@ -127,11 +127,11 @@ const OnboardingPage = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('profile_settings')
           .select('onboarding_completed')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error checking onboarding status:', error);
@@ -169,9 +169,10 @@ const OnboardingPage = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profile_settings')
-        .update({
+        .upsert({
+          user_id: user.id,
           ...answers,
           font_size: parseInt(answers.font_size || '16'),
           high_contrast: answers.high_contrast === 'true',
