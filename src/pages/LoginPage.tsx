@@ -19,7 +19,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/onboarding');
+      navigate('/quiz');
     }
   }, [isAuthenticated, navigate]);
 
