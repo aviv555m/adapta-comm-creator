@@ -215,6 +215,7 @@ Settings you can change:
 
 Respond concisely in English. Apply changes immediately when requested.`;
 
+        console.log('Attempting Ollama request to:', currentSettings.ollamaUrl);
         const ollamaResponse = await fetch(`${currentSettings.ollamaUrl}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -227,6 +228,8 @@ Respond concisely in English. Apply changes immediately when requested.`;
             stream: false
           })
         });
+        
+        console.log('Ollama response status:', ollamaResponse.status);
 
         if (ollamaResponse.ok) {
           const data = await ollamaResponse.json();
