@@ -127,7 +127,7 @@ const OnboardingPage = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from('profile_settings')
           .select('onboarding_completed')
           .eq('user_id', user.id)
@@ -169,7 +169,7 @@ const OnboardingPage = () => {
 
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('profile_settings')
         .upsert({
           user_id: user.id,
@@ -178,8 +178,7 @@ const OnboardingPage = () => {
           high_contrast: answers.high_contrast === 'true',
           ai_adapt_enabled: answers.ai_adapt_enabled === 'true',
           onboarding_completed: true
-        })
-        .eq('user_id', user.id);
+        });
 
       if (error) {
         throw error;

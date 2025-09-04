@@ -82,7 +82,7 @@ const BoardPage = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from('profile_settings')
           .select('*')
           .eq('user_id', user.id)
@@ -125,7 +125,7 @@ const BoardPage = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('profile_settings')
         .update({ language: languageCode })
         .eq('user_id', user.id);
