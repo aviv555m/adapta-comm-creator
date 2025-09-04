@@ -60,13 +60,8 @@ const Results = () => {
   };
 
   const handleReviewAnswers = () => {
-    // Find first unanswered question or go to Q1
-    const firstUnanswered = questions.findIndex(q => q.status === 'unanswered');
-    if (firstUnanswered !== -1) {
-      navigate(`/quiz?question=${firstUnanswered + 1}`);
-    } else {
-      navigate('/quiz');
-    }
+    // Simply navigate back to quiz - the useQuiz hook will handle the state
+    navigate('/quiz');
   };
 
   return (
