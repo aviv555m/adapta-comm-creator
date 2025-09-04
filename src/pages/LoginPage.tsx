@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useProviderCheck } from '@/hooks/useProviderCheck';
-import { useEventLogger } from '@/hooks/useEventLogger';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { toast } from '@/hooks/use-toast';
-import GoogleProviderModal from '@/components/GoogleProviderModal';
+import { GoogleProviderModal } from '@/components/GoogleProviderModal';
+
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
   const navigate = useNavigate();
-  const { signInWithGoogle, isAuthenticated } = useSupabaseAuth();
-  const { googleEnabled, loading: providerLoading, recheckProviders } = useProviderCheck();
-  const { logEvent } = useEventLogger();
+  const { signInWithGoogle, isAuthenticated } = useAuth();
+  const { isGoogleEnabled } = useProviderCheck();
   const { layout } = useResponsiveLayout();
 
   useEffect(() => {
@@ -24,13 +24,8 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   const handleGoogleSignIn = async () => {
-    // Check if Google provider is enabled before attempting login
-    if (googleEnabled === false) {
-      toast({
-        title: "Google Login Unavailable",
-        description: "Google provider is not enabled. Please check configuration.",
-        variant: "destructive"
-      });
+    if (!isGoogleEnabled) {
+      setShowGoogleModal(true);
       return;
     }
 
@@ -38,32 +33,16 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const { data, error } = await signInWithGoogle();
+      const result = await signInWithGoogle();
       
-      if (error) {
-        console.error('Google sign-in error:', error);
-        
-        // Handle specific provider error
-        if (error.message.includes('provider is not enabled')) {
-          await recheckProviders();
-          toast({
-            title: "Provider Not Enabled",
-            description: "Google provider is not enabled in Supabase. Please enable it first.",
-            variant: "destructive"
-          });
-        } else {
-          setError(error.message);
-          toast({
-            title: "Login Failed",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
-        
-        await logEvent('login_failed', error.message);
+      if (!result.success) {
+        setError(result.error || 'Login failed');
+        toast({
+          title: "Login Failed",
+          description: result.error || 'Login failed',
+          variant: "destructive"
+        });
       } else {
-        console.log('Google sign-in successful:', data);
-        await logEvent('login_success', 'google');
         toast({
           title: "Login Successful",
           description: "Welcome to Echoes Board!"
@@ -72,7 +51,6 @@ const LoginPage = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unexpected error occurred';
       setError(errorMessage);
-      await logEvent('login_failed', errorMessage);
       toast({
         title: "Login Failed",
         description: errorMessage,
@@ -88,14 +66,6 @@ const LoginPage = () => {
     handleGoogleSignIn();
   };
 
-  // Show loading state while checking providers
-  if (providerLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-primary/5 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
 
   return (
     <div 
@@ -190,11 +160,9 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Google Provider Modal */}
       <GoogleProviderModal 
-        open={googleEnabled === false}
-        onRecheck={recheckProviders}
-        loading={providerLoading}
+        isOpen={showGoogleModal} 
+        onClose={() => setShowGoogleModal(false)} 
       />
     </div>
   );

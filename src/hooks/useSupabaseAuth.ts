@@ -27,25 +27,50 @@ export const useSupabaseAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
       options: {
-        redirectTo: window.location.origin
+        emailRedirectTo: redirectUrl
       }
     });
-    
-    return { data, error };
+    return { error };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    return { error };
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/onboarding`
+      }
+    });
+    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('adaptacomm_settings');
+    localStorage.removeItem('echoes_quiz_v1');
+    const { error } = await supabase.auth.signOut();
+    return { error };
   };
 
   return {
     user,
     session,
     loading,
+    signUp,
+    signIn,
     signInWithGoogle,
     signOut,
     isAuthenticated: !!user
