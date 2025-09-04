@@ -40,14 +40,6 @@ const Board = () => {
   // Usage tracking and behavior analytics
   const { usage, trackTileUsage, getMostUsedTiles } = useUsageTracking();
   const { trackInteraction, startSession, endSession } = useBehaviorAnalytics();
-  
-  // Timer to reset button scaling every 20 seconds
-  const [scalingReset, setScalingReset] = useState(0);
-  
-  // Manual reset function for button sizes
-  const resetButtonSizes = () => {
-    setScalingReset(prev => prev + 100); // Large increment to reset all buttons
-  };
 
   // Settings and Profile (persisted)
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -241,15 +233,6 @@ const gridDesktopClass = 'grid-cols-3';
     return () => endSession();
   }, [startSession, endSession]);
 
-  // Timer to reset button scaling every 20 seconds
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setScalingReset(prev => prev + 1);
-    }, 20000); // 20 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="app-container">
       <div className="app-card max-w-6xl">
@@ -270,43 +253,34 @@ const gridDesktopClass = 'grid-cols-3';
             <Button
               variant="outline"
               onClick={toggleLanguage}
-              className="secondary-button h-12 px-6 text-lg"
+              className="secondary-button"
               title="Toggle Language"
             >
-              <Languages className="h-5 w-5 mr-2" />
+              <Languages className="h-4 w-4 mr-1" />
               {language === 'en' ? 'עברית' : 'English'}
             </Button>
             <Button
-              variant="outline"
-              onClick={resetButtonSizes}
-              className="secondary-button h-12 px-6 text-lg"
-              title="Reset all button sizes"
-            >
-              <span className="mr-2">↻</span>
-              {t('reset') || 'Reset'}
-            </Button>
-            <Button
               variant="default"
-              className="bg-blue-600 text-white hover:bg-blue-700 h-12 px-6 text-lg"
+              className="bg-blue-600 text-white hover:bg-blue-700"
               onClick={() => setSettingsOpen(true)}
               title="Open settings"
             >
-              <span className="mr-2">⚙️</span>
-              <Settings className="h-5 w-5 mr-2" />
+              <span className="mr-1">⚙️</span>
+              <Settings className="h-4 w-4 mr-1" />
               {t('settings')}
             </Button>
             <Button
               variant="default"
-              className="bg-purple-600 text-white hover:bg-purple-700 h-12 px-6 text-lg"
+              className="bg-purple-600 text-white hover:bg-purple-700"
               onClick={() => setAiControlPanelOpen(true)}
             >
-              <span className="mr-2">🤖</span>
-              <Volume2 className="h-5 w-5 mr-2" />
+              <span className="mr-1">🤖</span>
+              <Volume2 className="h-4 w-4 mr-1" />
               {t('aiAdapt')}
             </Button>
             <Button
               variant="default"
-              className="bg-green-600 text-white hover:bg-green-700 h-12 px-6 text-lg"
+              className="bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
                 if (selectedTile) {
                   const translatedText = t('boardData', selectedTile.text) || selectedTile.text;
@@ -319,8 +293,8 @@ const gridDesktopClass = 'grid-cols-3';
                 }
               }}
             >
-              <span className="mr-2">▶️</span>
-              <Mic className="h-5 w-5 mr-2" />
+              <span className="mr-1">▶️</span>
+              <Mic className="h-4 w-4 mr-1" />
               {t('ready')}
             </Button>
             <Button
@@ -329,13 +303,13 @@ const gridDesktopClass = 'grid-cols-3';
                 active 
                   ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'bg-orange-600 text-white hover:bg-orange-700'
-              } ${state.isCalibrating ? 'animate-pulse' : ''} h-12 px-6 text-lg`}
+              } ${state.isCalibrating ? 'animate-pulse' : ''}`}
               onClick={handleEyeTrackingToggle}
               disabled={state.isCalibrating}
               title={active ? 'Stop eye tracking' : 'Start eye tracking'}
             >
-              <span className="mr-2">👁️</span>
-              {active ? <EyeOff className="h-5 w-5 mr-2" /> : <Eye className="h-5 w-5 mr-2" />}
+              <span className="mr-1">👁️</span>
+              {active ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
               {state.isCalibrating ? t('calibrating') : active ? t('eyeOff') : t('eyeTrack')}
             </Button>
           </div>
@@ -376,7 +350,7 @@ const gridDesktopClass = 'grid-cols-3';
               {/* Back to Categories Button in the middle */}
               <Button
                 variant="default"
-                className="h-28 w-96 bg-blue-600 text-white hover:bg-blue-700 px-6 py-4 shadow-lg"
+                className="h-24 w-80 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
                 onClick={() => {
                   setCurrentCategory('All');
                   speakText(t('backToCategories'));
@@ -401,28 +375,34 @@ const gridDesktopClass = 'grid-cols-3';
                   // Get usage count for this tile
                   const usageCount = usage[tile.id]?.count || 0;
                   
-                  // Calculate dynamic styling based on usage frequency (max 2 steps, reset every 20s)
+                  // Calculate dynamic styling based on usage frequency
                   const getUsageBasedStyling = () => {
-                    // Reset scaling effect every 20 seconds
-                    const effectiveUsageCount = scalingReset > 0 ? Math.max(0, usageCount - (scalingReset * 5)) : usageCount;
-                    
-                    if (effectiveUsageCount >= 10) {
-                      // Step 2: Frequently used - bigger and brighter
+                    if (usageCount >= 10) {
+                      // Very frequently used - biggest and brightest
                       return {
-                        size: 'min-h-[240px] scale-110',
+                        size: 'min-h-[280px] scale-110',
                         glow: 'shadow-lg shadow-primary/50 border-primary',
                         brightness: 'bg-primary/20 hover:bg-primary/30',
-                        emoji: 'text-8xl',
-                        text: 'text-2xl'
+                        emoji: 'text-10xl',
+                        text: 'text-3xl'
                       };
-                    } else if (effectiveUsageCount >= 5) {
-                      // Step 1: Medium enhancement
+                    } else if (usageCount >= 5) {
+                      // Frequently used - medium enhancement
                       return {
-                        size: 'min-h-[220px] scale-105',
+                        size: 'min-h-[240px] scale-105',
                         glow: 'shadow-md shadow-primary/30 border-primary/70',
                         brightness: 'bg-primary/10 hover:bg-primary/20',
-                        emoji: 'text-7xl',
-                        text: 'text-xl'
+                        emoji: 'text-9xl',
+                        text: 'text-2xl'
+                      };
+                    } else if (usageCount >= 2) {
+                      // Moderately used - slight enhancement
+                      return {
+                        size: 'min-h-[220px]',
+                        glow: 'shadow-sm shadow-primary/20 border-primary/40',
+                        brightness: 'bg-primary/5 hover:bg-primary/10',
+                        emoji: 'text-8xl',
+                        text: 'text-2xl'
                       };
                     } else {
                       // Default styling for new/rarely used tiles
@@ -442,17 +422,17 @@ const gridDesktopClass = 'grid-cols-3';
                     <Button
                       key={tile.id}
                       variant="outline"
-                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all duration-500 ease-in-out flex flex-col items-center justify-center ${styling.size} ${styling.glow} ${styling.brightness} ${
+                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all duration-300 flex flex-col items-center justify-center ${styling.size} ${styling.glow} ${styling.brightness} ${
                         selectedTile?.id === tile.id 
                           ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
                           : (settings.highContrast ? 'border-foreground hover:bg-accent' : `border-border hover:border-primary hover:bg-accent/20 ${styling.brightness ? '' : 'hover:bg-accent/20'}`)
                       }`}
                       onClick={() => handleTileClick(tile)}
-                      title={`${simpleLabel} - ${tileDescription}`}
+                      title={`${simpleLabel} - ${tileDescription} (Used ${usageCount} times)`}
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
-                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300 overflow-hidden flex-shrink-0`}>{tile.emoji}</span>
+                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300`}>{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
@@ -462,6 +442,11 @@ const gridDesktopClass = 'grid-cols-3';
                           <span className="text-xs text-muted-foreground leading-tight text-center px-2">
                             {tileDescription}
                           </span>
+                          {usageCount > 0 && (
+                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full mt-2">
+                              {usageCount} clicks
+                            </span>
+                          )}
                         </>
                       )}
                     </Button>
@@ -535,13 +520,6 @@ const gridDesktopClass = 'grid-cols-3';
           }}
           onTrackInteraction={(type, data) => {
             trackInteraction({ type: type as any, data });
-          }}
-          usageData={{
-            clickCounts: usage,
-            mostUsedTiles: getMostUsedTiles(boardConfig.tiles, 10),
-            totalInteractions: Object.values(usage).reduce((sum, tileUsage) => sum + tileUsage.count, 0),
-            categoriesUsed: [...new Set(Object.keys(usage).map(tileId => 
-              boardConfig.tiles.find(t => t.id === tileId)?.category).filter(Boolean))]
           }}
         />
 
