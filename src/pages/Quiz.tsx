@@ -55,10 +55,10 @@ const Quiz = () => {
     }
   }, [currentIndex, currentQuestion]);
 
-  // Check if quiz is complete
+  // Check if quiz is complete and go straight to board
   useEffect(() => {
     if (isComplete()) {
-      navigate('/results');
+      navigate('/board');
     }
   }, [isComplete, navigate]);
 
@@ -135,7 +135,7 @@ const Quiz = () => {
   const handleSkipAll = () => {
     skipAllRemaining();
     setShowSkipAllDialog(false);
-    navigate('/results');
+    navigate('/board');
   };
 
   if (loading) {
@@ -184,8 +184,8 @@ const Quiz = () => {
                 <DropdownMenuItem onClick={() => setShowSkipAllDialog(true)}>
                   Skip All
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/results')}>
-                  Exit
+                <DropdownMenuItem onClick={() => navigate('/board')}>
+                  Go to Board
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
