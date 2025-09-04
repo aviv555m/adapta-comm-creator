@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          content: string | null
+          created_at: string
+          event_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profile_settings: {
+        Row: {
+          ai_adapt_enabled: boolean | null
+          created_at: string
+          font_size: number | null
+          high_contrast: boolean | null
+          id: string
+          language: string | null
+          onboarding_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_adapt_enabled?: boolean | null
+          created_at?: string
+          font_size?: number | null
+          high_contrast?: boolean | null
+          id?: string
+          language?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_adapt_enabled?: boolean | null
+          created_at?: string
+          font_size?: number | null
+          high_contrast?: boolean | null
+          id?: string
+          language?: string | null
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

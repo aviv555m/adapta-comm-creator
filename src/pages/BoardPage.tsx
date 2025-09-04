@@ -8,7 +8,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useEventLogger } from '@/hooks/useEventLogger';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -66,7 +68,8 @@ const BoardPage = () => {
   const [profileSettings, setProfileSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut } = useSupabaseAuth();
+  const { logEvent } = useEventLogger();
   const { layout } = useResponsiveLayout();
 
   useEffect(() => {
@@ -75,19 +78,29 @@ const BoardPage = () => {
       return;
     }
 
-    const loadProfileSettings = () => {
+    const loadProfileSettings = async () => {
+      if (!user) return;
+
       try {
-        const settings = localStorage.getItem('adaptacomm_settings');
-        if (settings) {
-          const parsedSettings = JSON.parse(settings);
-          if (!parsedSettings.onboarding_completed) {
-            navigate('/onboarding');
-            return;
-          }
-          setProfileSettings(parsedSettings);
-        } else {
+        const { data, error } = await supabase
+          .from('profile_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading profile settings:', error);
           navigate('/onboarding');
+          return;
         }
+
+        if (!data?.onboarding_completed) {
+          navigate('/onboarding');
+          return;
+        }
+
+        setProfileSettings(data);
+        await logEvent('board_viewed');
       } catch (error) {
         console.error('Error loading profile settings:', error);
         navigate('/onboarding');
@@ -97,20 +110,30 @@ const BoardPage = () => {
     };
 
     loadProfileSettings();
-  }, [user, isAuthenticated, navigate]);
+  }, [user, isAuthenticated, navigate, logEvent]);
 
-  const handleCategoryClick = (category: Category) => {
+  const handleCategoryClick = async (category: Category) => {
+    await logEvent('category_select', category.name);
+    
     toast({
       title: `${category.name} Selected`,
       description: `Opening ${category.description.toLowerCase()}...`
     });
   };
 
-  const handleLanguageChange = (languageCode: string) => {
+  const handleLanguageChange = async (languageCode: string) => {
+    if (!user) return;
+
     try {
-      const updatedSettings = { ...profileSettings, language: languageCode };
-      setProfileSettings(updatedSettings);
-      localStorage.setItem('adaptacomm_settings', JSON.stringify(updatedSettings));
+      const { error } = await supabase
+        .from('profile_settings')
+        .update({ language: languageCode })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setProfileSettings(prev => ({ ...prev, language: languageCode }));
+      await logEvent('language_changed', languageCode);
 
       toast({
         title: "Language Changed",
@@ -126,8 +149,9 @@ const BoardPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    signOut();
+  const handleLogout = async () => {
+    await logEvent('logout');
+    await signOut();
     navigate('/login');
   };
 
