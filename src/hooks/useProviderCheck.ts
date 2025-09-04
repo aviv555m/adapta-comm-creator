@@ -17,9 +17,9 @@ export const useProviderCheck = () => {
     setError(null);
     
     try {
-      // Use the hardcoded values from the integration
-      const supabaseUrl = 'https://xqbhaspfyjqzrrzzeakf.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxYmhhc3BmeWpxenJyenplYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MjIyNzksImV4cCI6MjA3MjQ5ODI3OX0.LSzhlMUIZ9IUum2B42AfhXA8SbEjfUbkdEh0JEqOMN8';
+      // Use the correct project values
+      const supabaseUrl = 'https://wwseomvevwswwojoowag.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3c2VvbXZldndzd3dvam9vd2FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5ODY3NTAsImV4cCI6MjA3MjU2Mjc1MH0.hPmDrnH1uI_IVvopGFnuavzY4LhjPo2CMaj2i50-KmI';
       
       // Check auth settings
       const response = await fetch(`${supabaseUrl}/auth/v1/settings`, {
