@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { useEventLogger } from '@/hooks/useEventLogger';
+import { useAuth } from '@/hooks/useAuth';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -112,8 +110,7 @@ const OnboardingPage = () => {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useSupabaseAuth();
-  const { logEvent } = useEventLogger();
+  const { user, isAuthenticated } = useAuth();
   const { layout } = useResponsiveLayout();
 
   useEffect(() => {
@@ -123,21 +120,15 @@ const OnboardingPage = () => {
     }
 
     // Check if user has already completed onboarding
-    const checkOnboardingStatus = async () => {
-      if (!user) return;
-
+    const checkOnboardingStatus = () => {
       try {
-        const { data, error } = await supabase
-          .from('profile_settings')
-          .select('onboarding_completed')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error checking onboarding status:', error);
-        } else if (data?.onboarding_completed) {
-          navigate('/board');
-          return;
+        const settings = localStorage.getItem('adaptacomm_settings');
+        if (settings) {
+          const parsedSettings = JSON.parse(settings);
+          if (parsedSettings.onboarding_completed) {
+            navigate('/board');
+            return;
+          }
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
@@ -149,12 +140,10 @@ const OnboardingPage = () => {
     checkOnboardingStatus();
   }, [user, isAuthenticated, navigate]);
 
-  const handleAnswerSelect = async (value: string) => {
+  const handleAnswerSelect = (value: string) => {
     const step = onboardingSteps[currentStep];
     const newAnswers = { ...answers, [step.field]: value };
     setAnswers(newAnswers);
-
-    await logEvent('question_answered', `${step.field}: ${value}`);
 
     // Auto-advance to next step after short delay
     setTimeout(() => {
@@ -164,27 +153,18 @@ const OnboardingPage = () => {
     }, 500);
   };
 
-  const handleComplete = async () => {
-    if (!user) return;
-
+  const handleComplete = () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profile_settings')
-        .upsert({
-          user_id: user.id,
-          ...answers,
-          font_size: parseInt(answers.font_size || '16'),
-          high_contrast: answers.high_contrast === 'true',
-          ai_adapt_enabled: answers.ai_adapt_enabled === 'true',
-          onboarding_completed: true
-        });
+      const settings = {
+        ...answers,
+        font_size: parseInt(answers.font_size || '16'),
+        high_contrast: answers.high_contrast === 'true',
+        ai_adapt_enabled: answers.ai_adapt_enabled === 'true',
+        onboarding_completed: true
+      };
 
-      if (error) {
-        throw error;
-      }
-
-      await logEvent('onboarding_completed', JSON.stringify(answers));
+      localStorage.setItem('adaptacomm_settings', JSON.stringify(settings));
       
       toast({
         title: "Setup Complete!",
