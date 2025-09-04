@@ -377,13 +377,31 @@ const gridDesktopClass = 'grid-cols-3';
                   
                   // Calculate dynamic styling based on usage frequency
                   const getUsageBasedStyling = () => {
-                    if (usageCount >= 10) {
+                    if (usageCount >= 30) {
+                      // Super frequently used - massive and brightest
+                      return {
+                        size: 'min-h-[320px] scale-125',
+                        glow: 'shadow-xl shadow-primary/70 border-primary border-4',
+                        brightness: 'bg-primary/30 hover:bg-primary/40',
+                        emoji: 'text-[12rem]',
+                        text: 'text-4xl'
+                      };
+                    } else if (usageCount >= 20) {
+                      // Extra frequently used - very big and bright
+                      return {
+                        size: 'min-h-[300px] scale-120',
+                        glow: 'shadow-xl shadow-primary/60 border-primary border-3',
+                        brightness: 'bg-primary/25 hover:bg-primary/35',
+                        emoji: 'text-[10rem]',
+                        text: 'text-4xl'
+                      };
+                    } else if (usageCount >= 10) {
                       // Very frequently used - biggest and brightest
                       return {
-                        size: 'min-h-[280px] scale-110',
+                        size: 'min-h-[280px] scale-115',
                         glow: 'shadow-lg shadow-primary/50 border-primary',
                         brightness: 'bg-primary/20 hover:bg-primary/30',
-                        emoji: 'text-10xl',
+                        emoji: 'text-[8rem]',
                         text: 'text-3xl'
                       };
                     } else if (usageCount >= 5) {
@@ -432,7 +450,7 @@ const gridDesktopClass = 'grid-cols-3';
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
-                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300`}>{tile.emoji}</span>
+                        <span className={`${styling.emoji} mb-4 leading-none transition-all duration-300 overflow-hidden flex-shrink-0`}>{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
