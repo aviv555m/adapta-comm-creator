@@ -16,10 +16,24 @@ interface Message {
   timestamp: Date;
 }
 
+interface TileUsage {
+  tileId: string;
+  count: number;
+  lastUsed: number;
+}
+
+interface UsageData {
+  clickCounts: Record<string, TileUsage>;
+  mostUsedTiles: any[];
+  totalInteractions: number;
+  categoriesUsed: string[];
+}
+
 interface AIChatBotProps {
   onUpdateSettings: (settings: Partial<BoardSettings>) => void;
   currentSettings: BoardSettings;
   onTrackInteraction?: (type: string, data: any) => void;
+  usageData?: UsageData;
 }
 
 interface QuizPersonalization {
@@ -35,7 +49,7 @@ interface QuizPersonalization {
   contextAwareness: string;
 }
 
-export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction }) => {
+export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction, usageData }) => {
   const { language, t } = useLanguage();
   const { questions } = useQuiz();
   const [isOpen, setIsOpen] = useState(false);
@@ -273,6 +287,112 @@ Respond concisely in English. Apply changes immediately when requested.`;
         settings.enabledCategories = [...new Set([...categories, 'Core', 'Basic Needs'])];
       }
 
+      return settings;
+    };
+
+    // Generate settings based on actual usage data
+    const generateUsageBasedSettings = (): Partial<BoardSettings> => {
+      if (!usageData) return {};
+      
+      const settings: Partial<BoardSettings> = {};
+      
+      // Adjust tile size based on usage frequency
+      if (usageData.totalInteractions > 100) {
+        settings.tileSize = 8; // Larger tiles for heavy users
+      } else if (usageData.totalInteractions > 50) {
+        settings.tileSize = 7;
+      } else if (usageData.totalInteractions > 20) {
+        settings.tileSize = 6;
+      }
+      
+      // Enable only categories that are actually used
+      if (usageData.categoriesUsed.length > 0) {
+        settings.enabledCategories = [...new Set([
+          ...usageData.categoriesUsed,
+          'Core', // Always include core
+          'Basic Needs' // Always include basic needs
+        ])];
+      }
+      
+      // Adjust voice speed based on usage patterns
+      if (usageData.totalInteractions > 50) {
+        settings.voiceRate = 1.1; // Slightly faster for experienced users
+      } else {
+        settings.voiceRate = 0.9; // Slower for beginners
+      }
+      
+      // Enable high contrast for users with lots of interactions (accessibility)
+      if (usageData.totalInteractions > 200) {
+        settings.highContrast = true;
+      }
+      
+      return settings;
+    };
+
+    // Generate settings based on quiz answers AND usage data
+    const generateQuizAndUsageBasedSettings = (): Partial<BoardSettings> => {
+      const settings: Partial<BoardSettings> = {};
+      
+      // Start with quiz-based preferences
+      const quizSettings = applyPersonalizedSettings();
+      Object.assign(settings, quizSettings);
+      
+      // Layer in usage-based optimizations if available
+      if (usageData && usageData.totalInteractions > 5) {
+        const usageSettings = generateUsageBasedSettings();
+        Object.assign(settings, usageSettings);
+      }
+      
+      // Smart category selection based on both quiz and usage
+      const categories = new Set<string>();
+      
+      // Add categories based on quiz interests
+      if (personalization.favoriteTopics.includes('Games')) {
+        categories.add('Activities');
+        categories.add('Toys');
+        categories.add('Games');
+      }
+      if (personalization.favoriteTopics.includes('School')) {
+        categories.add('School');
+        categories.add('Numbers');
+        categories.add('Colors');
+      }
+      if (personalization.favoriteTopics.includes('Family')) {
+        categories.add('People');
+        categories.add('Home');
+        categories.add('Emotions');
+      }
+      if (personalization.favoriteTopics.includes('Food')) {
+        categories.add('Food');
+        categories.add('Drinks');
+      }
+      
+      // Add actually used categories
+      if (usageData) {
+        usageData.categoriesUsed.forEach(cat => categories.add(cat));
+      }
+      
+      // Always include essentials
+      categories.add('Core');
+      categories.add('Basic Needs');
+      
+      settings.enabledCategories = Array.from(categories);
+      
+      // Optimize tile size based on communication style + usage
+      if (personalization.communicationStyle.includes('Point')) {
+        settings.tileSize = Math.max(7, settings.tileSize || 5); // Bigger for pointing
+      } else if (personalization.communicationStyle.includes('Look')) {
+        settings.tileSize = Math.min(6, settings.tileSize || 5); // Smaller for eye tracking
+        settings.showGazeDot = true;
+      }
+      
+      // Voice optimization
+      if (personalization.voicePreference.includes('Slow') || personalization.adaptiveLevel.includes('never')) {
+        settings.voiceRate = 0.8; // Slower for learning
+      } else if (usageData && usageData.totalInteractions > 50) {
+        settings.voiceRate = 1.1; // Faster for experienced users
+      }
+      
       return settings;
     };
 
@@ -582,16 +702,16 @@ What would you like to improve?`;
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
+        className="fixed bottom-4 right-4 z-50 rounded-full w-16 h-16 shadow-lg bg-primary hover:bg-primary/90"
         title={language === 'he' ? 'עוזר חכם' : 'Smart Assistant'}
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle className="h-8 w-8" />
       </Button>
     );
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-[520px] h-[640px] shadow-2xl">
+    <Card className="fixed bottom-4 right-4 z-50 w-[680px] h-[780px] shadow-2xl">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />
