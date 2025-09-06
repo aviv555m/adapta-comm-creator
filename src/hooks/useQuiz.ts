@@ -28,7 +28,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 9,
+    id: 2,
     label: "What are your favorite things to talk about?",
     type: 'single',
     options: [
@@ -105,14 +105,14 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 2,
-    label: "When you need help quickly, what should the app do?",
+    id: 9,
+    label: "What are your favorite things to talk about?",
     type: 'single',
     options: [
-      "🆘 Big \"Help me\" button",
-      "👍👎 Quick Yes / No choices",
-      "👨‍👩‍👦 Show people I choose",
-      "🌈 Calming pictures or sounds"
+      "👫 Friends & family",
+      "🎮 Games & toys",
+      "🏫 School & learning",
+      "🍔🐶 Food, animals & hobbies"
     ]
   },
   {
