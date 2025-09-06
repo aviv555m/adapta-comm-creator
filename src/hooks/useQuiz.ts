@@ -24,45 +24,24 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     options: [
       "👉 Point with hands/fingers",
       "👀 Look with eyes",
-      "🗣️ Make sounds/gestures"
-    ]
-  },
-  {
-    id: 9,
-    label: "What are your favorite things to talk about?",
-    type: 'single',
-    options: [
-      "👫 Friends & family",
-      "🎮 Games & toys",
-      "🏫 School & learning",
-      "🍔🐶 Food, animals & hobbies"
+      "🗣️ Make sounds/gestures",
+      "🤲 Other ways"
     ]
   },
   {
     id: 3,
-    label: "Which language(s) do you use most at home or school?",
+    label: "Which languages would you talk about, now?",
     type: 'single',
     options: [
       "🇮🇱 Hebrew",
       "🇷🇺 Russian",
       "🇬🇧 English",
-      "🌍 More than one / Mixed"
-    ]
-  },
-  {
-    id: 4,
-    label: "How do you like to build your messages?",
-    type: 'single',
-    options: [
-      "🔘 One button at a time",
-      "✌️ Two or three words together",
-      "📑 Ready-made phrases",
-      "📝 Mix words & make my own"
+      "🌍 Other"
     ]
   },
   {
     id: 5,
-    label: "Which pictures are easiest for you to use?",
+    label: "Which images would you like to use now?",
     type: 'single',
     options: [
       "📸 Real photos",
@@ -72,25 +51,45 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 6,
-    label: "How do you want the app to sound when it speaks?",
+    id: 7,
+    label: "Do you want text under the pictures?",
     type: 'single',
     options: [
-      "👦 Child's voice",
-      "👨 Man's voice",
-      "👩 Woman's voice",
-      "🤖 Robot/fun voice"
+      "✅ Yes, always",
+      "🔄 Only sometimes",
+      "📷 No, pictures only"
     ]
   },
   {
-    id: 7,
-    label: "What emotions should Echoes help you show first?",
+    id: 6,
+    label: "Which voice would you like to use now?",
     type: 'single',
     options: [
-      "😀 Happy / Excited",
-      "😢 Sad",
-      "😡 Angry",
-      "😨 Scared / Worried"
+      "👦 Boy's voice",
+      "👧 Girl's voice",
+      "👨 Man's voice",
+      "👩 Woman's voice"
+    ]
+  },
+  {
+    id: 10,
+    label: "How fast should the voice speak?",
+    type: 'single',
+    options: [
+      "🐌 Slow",
+      "⚡ Medium",
+      "🚀 Fast"
+    ]
+  },
+  {
+    id: 4,
+    label: "How do you like to build your messages?",
+    type: 'single',
+    options: [
+      "🔘 Word by word",
+      "✌️ Two or three words together",
+      "📑 Ready-made phrases",
+      "📝 Mix words & make my own"
     ]
   },
   {
@@ -106,24 +105,24 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
   },
   {
     id: 2,
-    label: "When you need help quickly, what should the app do?",
+    label: "What would you like to speak about, now?",
     type: 'single',
     options: [
-      "🆘 Big \"Help me\" button",
-      "👍👎 Quick Yes / No choices",
-      "👨‍👩‍👦 Show people I choose",
-      "🌈 Calming pictures or sounds"
+      "👫 Friends & family & Feelings",
+      "🎮 Games",
+      "🏫 School & learning",
+      "🍔 Food"
     ]
   },
   {
-    id: 10,
-    label: "Do you want Echoes to look different in different places?",
+    id: 9,
+    label: "What are your favorite things to talk about?",
     type: 'single',
     options: [
-      "🏫 Yes, at school",
-      "🏠 Yes, at home",
-      "🌳 Yes, outside (park, shop)",
-      "🔒 No, always the same"
+      "👫 Friends & family",
+      "🎮 Games & toys",
+      "🏫 School & learning",
+      "🍔🐶 Food, animals & hobbies"
     ]
   }
 ];
@@ -236,6 +235,11 @@ export const useQuiz = () => {
     return { answered, skipped, total: questions.length, progress };
   };
 
+  const getSelectedBoard = () => {
+    // This will be used to get the appropriate AAC board based on answers
+    return questions;
+  };
+
   const getCurrentQuestion = () => questions[currentIndex];
   const isComplete = () => currentIndex >= questions.length - 1 && 
     (questions[currentIndex]?.status === 'answered' || questions[currentIndex]?.status === 'skipped');
@@ -247,6 +251,7 @@ export const useQuiz = () => {
     loading,
     getCurrentQuestion,
     getStats,
+    getSelectedBoard,
     answerQuestion,
     skipQuestion,
     skipAllRemaining,

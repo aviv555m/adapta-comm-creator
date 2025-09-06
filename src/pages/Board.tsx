@@ -12,6 +12,7 @@ import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { EyeTrackingDot } from '@/components/EyeTrackingDot';
 import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
+import { selectBoardBasedOnAnswers } from '@/data/aacBoards';
 import { BoardTile } from '@/types/board';
 import { AIChatBot } from '@/components/AIChatBot';
 import { AIControlPanel } from '@/components/AIControlPanel';
@@ -19,8 +20,8 @@ import { useBehaviorAnalytics } from '@/hooks/useBehaviorAnalytics';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const Board = () => {
-  const navigate = useNavigate();
-  const { questions, resetQuiz } = useQuiz();
+const navigate = useNavigate();
+  const { questions, resetQuiz, getSelectedBoard } = useQuiz();
   const { toast } = useToast();
   const { language, t, toggleLanguage } = useLanguage();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
@@ -56,13 +57,15 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
 
   // Generate board configuration based on quiz answers
   const generateBoardConfig = () => {
-    const allTiles = generateExpandedBoardData();
-    const allCategories = getAllCategories();
+    const questionsForBoard = getSelectedBoard();
+    const selectedBoard = selectBoardBasedOnAnswers(questionsForBoard);
     
+    // Use the selected AAC board configuration
     return {
-      tiles: allTiles,
-      layout: 'Comprehensive AAC Board',
-      categories: allCategories
+      tiles: selectedBoard.config.tiles,
+      layout: selectedBoard.name,
+      categories: selectedBoard.config.categories,
+      description: selectedBoard.description
     };
   };
 
@@ -240,6 +243,9 @@ const gridDesktopClass = 'grid-cols-3';
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-lg text-blue-800 text-center">
             🌟 {t('welcomeMessage')}
+          </p>
+          <p className="text-sm text-blue-600 text-center mt-2">
+            📋 Selected Board: {boardConfig.layout} - {boardConfig.description}
           </p>
         </div>
         
