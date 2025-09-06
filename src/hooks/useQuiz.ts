@@ -29,18 +29,18 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 3,
+    id: 2,
     label: "Which languages would you talk about, now?",
     type: 'single',
     options: [
       "🇮🇱 Hebrew",
-      "🇷🇺 Russian",
+      "🇷🇺 Russian", 
       "🇬🇧 English",
       "🌍 Other"
     ]
   },
   {
-    id: 5,
+    id: 3,
     label: "Which images would you like to use now?",
     type: 'single',
     options: [
@@ -51,7 +51,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 7,
+    id: 4,
     label: "Do you want text under the pictures?",
     type: 'single',
     options: [
@@ -61,7 +61,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 6,
+    id: 5,
     label: "Which voice would you like to use now?",
     type: 'single',
     options: [
@@ -72,7 +72,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 10,
+    id: 6,
     label: "How fast should the voice speak?",
     type: 'single',
     options: [
@@ -82,7 +82,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 4,
+    id: 7,
     label: "How do you like to build your messages?",
     type: 'single',
     options: [
@@ -104,7 +104,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 2,
+    id: 9,
     label: "What would you like to speak about, now?",
     type: 'single',
     options: [
@@ -115,7 +115,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 9,
+    id: 10,
     label: "What are your favorite things to talk about?",
     type: 'single',
     options: [

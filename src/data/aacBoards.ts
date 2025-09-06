@@ -8,69 +8,79 @@ export interface AACBoard {
   config: BoardConfig;
 }
 
-// Five different AAC boards
+// Five different AAC boards with improved content and emojis
 export const AAC_BOARDS: AACBoard[] = [
   {
     id: 'basic_simple',
-    name: 'Basic & Simple',
-    description: 'Simple word-by-word communication with essential needs',
+    name: '🌟 Basic & Simple',
+    description: 'Perfect for beginners - essential words with big buttons',
     config: {
       tiles: [
-        // Basic needs
-        { id: 'want', text: 'Want', emoji: '👐', category: 'Basic', priority: 1 },
-        { id: 'need', text: 'Need', emoji: '🙏', category: 'Basic', priority: 1 },
-        { id: 'help', text: 'Help', emoji: '🆘', category: 'Basic', priority: 1 },
-        { id: 'yes', text: 'Yes', emoji: '✅', category: 'Basic', priority: 1 },
-        { id: 'no', text: 'No', emoji: '❌', category: 'Basic', priority: 1 },
-        { id: 'stop', text: 'Stop', emoji: '🛑', category: 'Basic', priority: 1 },
+        // Core essentials
+        { id: 'want', text: 'Want', emoji: '🙋‍♂️', category: 'Core', priority: 1 },
+        { id: 'need', text: 'Need', emoji: '🆘', category: 'Core', priority: 1 },
+        { id: 'help', text: 'Help', emoji: '🤝', category: 'Core', priority: 1 },
+        { id: 'yes', text: 'Yes', emoji: '✅', category: 'Core', priority: 1 },
+        { id: 'no', text: 'No', emoji: '❌', category: 'Core', priority: 1 },
+        { id: 'stop', text: 'Stop', emoji: '🛑', category: 'Core', priority: 1 },
+        { id: 'more', text: 'More', emoji: '➕', category: 'Core', priority: 1 },
+        { id: 'finished', text: 'Done', emoji: '✔️', category: 'Core', priority: 1 },
+        { id: 'please', text: 'Please', emoji: '🙏', category: 'Core', priority: 1 },
         
-        // Simple feelings
+        // Basic feelings  
         { id: 'happy', text: 'Happy', emoji: '😊', category: 'Feelings', priority: 2 },
         { id: 'sad', text: 'Sad', emoji: '😢', category: 'Feelings', priority: 2 },
-        { id: 'angry', text: 'Angry', emoji: '😡', category: 'Feelings', priority: 2 },
+        { id: 'angry', text: 'Mad', emoji: '😡', category: 'Feelings', priority: 2 },
+        { id: 'tired', text: 'Tired', emoji: '😴', category: 'Feelings', priority: 2 },
+        { id: 'hurt', text: 'Hurt', emoji: '🤕', category: 'Feelings', priority: 2 },
         
-        // Basic actions
+        // Basic needs
         { id: 'eat', text: 'Eat', emoji: '🍽️', category: 'Actions', priority: 2 },
         { id: 'drink', text: 'Drink', emoji: '🥤', category: 'Actions', priority: 2 },
-        { id: 'play', text: 'Play', emoji: '🎮', category: 'Actions', priority: 2 },
-        { id: 'sleep', text: 'Sleep', emoji: '😴', category: 'Actions', priority: 3 },
+        { id: 'bathroom', text: 'Bathroom', emoji: '🚽', category: 'Actions', priority: 1 },
+        { id: 'sleep', text: 'Sleep', emoji: '😴', category: 'Actions', priority: 2 },
         
-        // People
-        { id: 'mom', text: 'Mom', emoji: '👩', category: 'People', priority: 2 },
-        { id: 'dad', text: 'Dad', emoji: '👨', category: 'People', priority: 2 },
-        { id: 'friend', text: 'Friend', emoji: '👫', category: 'People', priority: 3 }
+        // Important people
+        { id: 'mom', text: 'Mom', emoji: '👩‍👧‍👦', category: 'People', priority: 2 },
+        { id: 'dad', text: 'Dad', emoji: '👨‍👧‍👦', category: 'People', priority: 2 },
+        { id: 'teacher', text: 'Teacher', emoji: '👩‍🏫', category: 'People', priority: 2 }
       ],
-      categories: ['Basic', 'Feelings', 'Actions', 'People'],
+      categories: ['Core', 'Feelings', 'Actions', 'People'],
       layout: 'grid-4x4'
     }
   },
   {
     id: 'social_focused',
-    name: 'Social & Feelings',
-    description: 'Focus on social interaction and emotional expression',
+    name: '🤗 Social & Emotions',
+    description: 'Express feelings and connect with others',
     config: {
       tiles: [
         // Social greetings
         { id: 'hello', text: 'Hello', emoji: '👋', category: 'Social', priority: 1 },
-        { id: 'goodbye', text: 'Goodbye', emoji: '👋', category: 'Social', priority: 1 },
+        { id: 'bye', text: 'Goodbye', emoji: '👋', category: 'Social', priority: 1 },
         { id: 'please', text: 'Please', emoji: '🙏', category: 'Social', priority: 1 },
-        { id: 'thank_you', text: 'Thank you', emoji: '🙏', category: 'Social', priority: 1 },
+        { id: 'thank_you', text: 'Thank you', emoji: '💝', category: 'Social', priority: 1 },
         { id: 'sorry', text: 'Sorry', emoji: '😔', category: 'Social', priority: 1 },
+        { id: 'excuse_me', text: 'Excuse me', emoji: '🙋‍♂️', category: 'Social', priority: 1 },
         
-        // Expanded feelings
+        // Rich emotions
         { id: 'happy', text: 'Happy', emoji: '😊', category: 'Feelings', priority: 1 },
         { id: 'excited', text: 'Excited', emoji: '🤩', category: 'Feelings', priority: 1 },
+        { id: 'proud', text: 'Proud', emoji: '😌', category: 'Feelings', priority: 1 },
         { id: 'sad', text: 'Sad', emoji: '😢', category: 'Feelings', priority: 1 },
-        { id: 'angry', text: 'Angry', emoji: '😡', category: 'Feelings', priority: 1 },
-        { id: 'scared', text: 'Scared', emoji: '😨', category: 'Feelings', priority: 1 },
-        { id: 'love', text: 'Love', emoji: '❤️', category: 'Feelings', priority: 2 },
-        { id: 'like', text: 'Like', emoji: '👍', category: 'Feelings', priority: 2 },
-        { id: 'dont_like', text: "Don't like", emoji: '👎', category: 'Feelings', priority: 2 },
+        { id: 'worried', text: 'Worried', emoji: '😰', category: 'Feelings', priority: 1 },
+        { id: 'frustrated', text: 'Frustrated', emoji: '😤', category: 'Feelings', priority: 1 },
+        { id: 'calm', text: 'Calm', emoji: '😌', category: 'Feelings', priority: 2 },
+        { id: 'surprised', text: 'Surprised', emoji: '😲', category: 'Feelings', priority: 2 },
         
         // Social actions
+        { id: 'love', text: 'Love', emoji: '❤️', category: 'Social', priority: 1 },
+        { id: 'like', text: 'Like', emoji: '👍', category: 'Social', priority: 1 },
+        { id: 'dont_like', text: "Don't like", emoji: '👎', category: 'Social', priority: 1 },
         { id: 'share', text: 'Share', emoji: '🤝', category: 'Social', priority: 2 },
         { id: 'hug', text: 'Hug', emoji: '🤗', category: 'Social', priority: 2 },
-        { id: 'talk', text: 'Talk', emoji: '💬', category: 'Social', priority: 2 }
+        { id: 'friend', text: 'Friend', emoji: '👫', category: 'Social', priority: 2 },
+        { id: 'family', text: 'Family', emoji: '👨‍👩‍👧‍👦', category: 'Social', priority: 2 }
       ],
       categories: ['Social', 'Feelings'],
       layout: 'grid-4x4'
@@ -78,33 +88,38 @@ export const AAC_BOARDS: AACBoard[] = [
   },
   {
     id: 'school_learning',
-    name: 'School & Learning',
-    description: 'Educational focus with school-related vocabulary',
+    name: '🎓 School & Learning',
+    description: 'Perfect for classroom communication',
     config: {
       tiles: [
-        // Basic school needs
+        // School essentials
         { id: 'help', text: 'Help', emoji: '🆘', category: 'School', priority: 1 },
         { id: 'understand', text: 'Understand', emoji: '💡', category: 'School', priority: 1 },
         { id: 'dont_understand', text: "Don't understand", emoji: '❓', category: 'School', priority: 1 },
         { id: 'finished', text: 'Finished', emoji: '✅', category: 'School', priority: 1 },
         { id: 'more_time', text: 'More time', emoji: '⏰', category: 'School', priority: 1 },
+        { id: 'ready', text: 'Ready', emoji: '🙋‍♂️', category: 'School', priority: 1 },
+        { id: 'question', text: 'Question', emoji: '🙋‍♀️', category: 'School', priority: 1 },
+        { id: 'answer', text: 'Answer', emoji: '💬', category: 'School', priority: 1 },
         
         // School subjects
-        { id: 'math', text: 'Math', emoji: '📊', category: 'Subjects', priority: 2 },
+        { id: 'math', text: 'Math', emoji: '🔢', category: 'Subjects', priority: 2 },
         { id: 'reading', text: 'Reading', emoji: '📚', category: 'Subjects', priority: 2 },
+        { id: 'writing', text: 'Writing', emoji: '✏️', category: 'Subjects', priority: 2 },
         { id: 'science', text: 'Science', emoji: '🔬', category: 'Subjects', priority: 2 },
         { id: 'art', text: 'Art', emoji: '🎨', category: 'Subjects', priority: 2 },
         { id: 'music', text: 'Music', emoji: '🎵', category: 'Subjects', priority: 3 },
+        { id: 'pe', text: 'PE', emoji: '⚽', category: 'Subjects', priority: 3 },
         
         // School actions
-        { id: 'write', text: 'Write', emoji: '✏️', category: 'Actions', priority: 2 },
         { id: 'listen', text: 'Listen', emoji: '👂', category: 'Actions', priority: 2 },
         { id: 'look', text: 'Look', emoji: '👀', category: 'Actions', priority: 2 },
-        { id: 'answer', text: 'Answer', emoji: '🗣️', category: 'Actions', priority: 2 },
+        { id: 'think', text: 'Think', emoji: '🤔', category: 'Actions', priority: 2 },
+        { id: 'work', text: 'Work', emoji: '📝', category: 'Actions', priority: 2 },
         
-        // People at school
+        // School people
         { id: 'teacher', text: 'Teacher', emoji: '👩‍🏫', category: 'People', priority: 2 },
-        { id: 'friend', text: 'Friend', emoji: '👫', category: 'People', priority: 2 }
+        { id: 'classmate', text: 'Classmate', emoji: '👫', category: 'People', priority: 2 }
       ],
       categories: ['School', 'Subjects', 'Actions', 'People'],
       layout: 'grid-4x4'
@@ -112,69 +127,77 @@ export const AAC_BOARDS: AACBoard[] = [
   },
   {
     id: 'games_fun',
-    name: 'Games & Fun',
-    description: 'Play-focused board with games and entertainment',
+    name: '🎮 Games & Fun',
+    description: 'All about play, games and having fun!',
     config: {
       tiles: [
-        // Gaming
+        // Gaming core
         { id: 'play', text: 'Play', emoji: '🎮', category: 'Games', priority: 1 },
         { id: 'game', text: 'Game', emoji: '🎲', category: 'Games', priority: 1 },
-        { id: 'toy', text: 'Toy', emoji: '🧸', category: 'Games', priority: 1 },
         { id: 'fun', text: 'Fun', emoji: '🎉', category: 'Games', priority: 1 },
-        { id: 'turn', text: 'My turn', emoji: '👆', category: 'Games', priority: 1 },
+        { id: 'my_turn', text: 'My turn', emoji: '🙋‍♂️', category: 'Games', priority: 1 },
         { id: 'your_turn', text: 'Your turn', emoji: '👉', category: 'Games', priority: 1 },
+        { id: 'wait', text: 'Wait', emoji: '⏳', category: 'Games', priority: 1 },
         
-        // Game actions
-        { id: 'win', text: 'Win', emoji: '🏆', category: 'Actions', priority: 2 },
-        { id: 'lose', text: 'Lose', emoji: '😔', category: 'Actions', priority: 2 },
-        { id: 'again', text: 'Again', emoji: '🔄', category: 'Actions', priority: 1 },
-        { id: 'stop_playing', text: 'Stop playing', emoji: '🛑', category: 'Actions', priority: 2 },
+        // Game outcomes
+        { id: 'win', text: 'Win', emoji: '🏆', category: 'Results', priority: 1 },
+        { id: 'lose', text: 'Lose', emoji: '😔', category: 'Results', priority: 2 },
+        { id: 'tie', text: 'Tie', emoji: '🤝', category: 'Results', priority: 2 },
+        { id: 'good_job', text: 'Good job', emoji: '👏', category: 'Results', priority: 1 },
+        { id: 'try_again', text: 'Try again', emoji: '🔄', category: 'Results', priority: 1 },
+        
+        // Activities
+        { id: 'video_game', text: 'Video game', emoji: '🎮', category: 'Activities', priority: 2 },
+        { id: 'board_game', text: 'Board game', emoji: '🎲', category: 'Activities', priority: 2 },
+        { id: 'puzzle', text: 'Puzzle', emoji: '🧩', category: 'Activities', priority: 2 },
+        { id: 'toys', text: 'Toys', emoji: '🧸', category: 'Activities', priority: 2 },
+        { id: 'blocks', text: 'Blocks', emoji: '🧱', category: 'Activities', priority: 3 },
+        { id: 'drawing', text: 'Drawing', emoji: '🖍️', category: 'Activities', priority: 2 },
         
         // Entertainment
-        { id: 'video', text: 'Video', emoji: '📺', category: 'Entertainment', priority: 2 },
+        { id: 'watch', text: 'Watch', emoji: '📺', category: 'Entertainment', priority: 2 },
         { id: 'music', text: 'Music', emoji: '🎵', category: 'Entertainment', priority: 2 },
-        { id: 'book', text: 'Book', emoji: '📚', category: 'Entertainment', priority: 3 },
-        { id: 'outside', text: 'Outside', emoji: '🌳', category: 'Entertainment', priority: 2 },
-        
-        // Social gaming
-        { id: 'together', text: 'Together', emoji: '👥', category: 'Social', priority: 2 },
-        { id: 'alone', text: 'Alone', emoji: '👤', category: 'Social', priority: 3 }
+        { id: 'dance', text: 'Dance', emoji: '💃', category: 'Entertainment', priority: 2 },
+        { id: 'sing', text: 'Sing', emoji: '🎤', category: 'Entertainment', priority: 3 }
       ],
-      categories: ['Games', 'Actions', 'Entertainment', 'Social'],
+      categories: ['Games', 'Results', 'Activities', 'Entertainment'],
       layout: 'grid-4x4'
     }
   },
   {
     id: 'comprehensive',
-    name: 'Comprehensive',
-    description: 'Complete communication board with ready-made phrases',
+    name: '🌈 Complete Communicator',
+    description: 'Advanced board with phrases and complex ideas',
     config: {
       tiles: [
         // Ready-made phrases
-        { id: 'i_want', text: 'I want', emoji: '👐', category: 'Phrases', priority: 1 },
-        { id: 'i_need', text: 'I need', emoji: '🙏', category: 'Phrases', priority: 1 },
+        { id: 'i_want', text: 'I want', emoji: '🙋‍♂️', category: 'Phrases', priority: 1 },
+        { id: 'i_need', text: 'I need', emoji: '🆘', category: 'Phrases', priority: 1 },
         { id: 'i_like', text: 'I like', emoji: '👍', category: 'Phrases', priority: 1 },
         { id: 'i_dont_like', text: "I don't like", emoji: '👎', category: 'Phrases', priority: 1 },
         { id: 'can_you', text: 'Can you', emoji: '❓', category: 'Phrases', priority: 1 },
         { id: 'i_feel', text: 'I feel', emoji: '💭', category: 'Phrases', priority: 1 },
+        { id: 'lets_go', text: "Let's go", emoji: '🚶‍♂️', category: 'Phrases', priority: 1 },
+        { id: 'come_here', text: 'Come here', emoji: '👈', category: 'Phrases', priority: 1 },
         
         // Complex actions
         { id: 'understand', text: 'Understand', emoji: '💡', category: 'Actions', priority: 2 },
         { id: 'remember', text: 'Remember', emoji: '🧠', category: 'Actions', priority: 2 },
         { id: 'forget', text: 'Forget', emoji: '🤔', category: 'Actions', priority: 3 },
         { id: 'choose', text: 'Choose', emoji: '🤏', category: 'Actions', priority: 2 },
+        { id: 'decide', text: 'Decide', emoji: '🤷‍♂️', category: 'Actions', priority: 2 },
+        { id: 'explain', text: 'Explain', emoji: '💬', category: 'Actions', priority: 2 },
         
-        // Categories
+        // Categories & concepts
         { id: 'food', text: 'Food', emoji: '🍔', category: 'Categories', priority: 2 },
         { id: 'people', text: 'People', emoji: '👥', category: 'Categories', priority: 2 },
         { id: 'places', text: 'Places', emoji: '🏠', category: 'Categories', priority: 2 },
         { id: 'things', text: 'Things', emoji: '📦', category: 'Categories', priority: 2 },
-        
-        // Time
-        { id: 'now', text: 'Now', emoji: '⏰', category: 'Time', priority: 2 },
-        { id: 'later', text: 'Later', emoji: '🕐', category: 'Time', priority: 3 }
+        { id: 'colors', text: 'Colors', emoji: '🌈', category: 'Categories', priority: 3 },
+        { id: 'numbers', text: 'Numbers', emoji: '🔢', category: 'Categories', priority: 3 },
+        { id: 'feelings', text: 'Feelings', emoji: '😊', category: 'Categories', priority: 2 }
       ],
-      categories: ['Phrases', 'Actions', 'Categories', 'Time'],
+      categories: ['Phrases', 'Actions', 'Categories'],
       layout: 'grid-4x4'
     }
   }
