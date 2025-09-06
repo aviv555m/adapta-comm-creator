@@ -19,17 +19,16 @@ export interface QuizEvent {
 const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
   {
     id: 1,
-    label: "How do you prefer to communicate now",
+    label: "How do you prefer to communicate now?",
     type: 'single',
     options: [
       "👉 Point with hands/fingers",
       "👀 Look with eyes",
-      "🗣️ Make sounds/gestures",
-      "🖼️ Use pictures or symbols"
+      "🗣️ Make sounds/gestures"
     ]
   },
   {
-    id: 2,
+    id: 9,
     label: "What are your favorite things to talk about?",
     type: 'single',
     options: [
@@ -106,7 +105,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
     ]
   },
   {
-    id: 9,
+    id: 2,
     label: "When you need help quickly, what should the app do?",
     type: 'single',
     options: [
