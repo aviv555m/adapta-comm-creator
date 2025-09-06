@@ -20,7 +20,7 @@ const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
   {
     id: 1,
     label: "How do you prefer to communicate now",
-    type: 'single',
+    type: 'multi',
     options: [
       "👉 Point with hands/fingers",
       "👀 Look with eyes",
