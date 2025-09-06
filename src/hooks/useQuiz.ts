@@ -19,7 +19,7 @@ export interface QuizEvent {
 const QUIZ_QUESTIONS: Omit<QuizQuestion, 'status' | 'value'>[] = [
   {
     id: 1,
-    label: "How do you prefer to communicate now?",
+    label: "How do you prefer to communicat",
     type: 'single',
     options: [
       "👉 Point with hands/fingers",
