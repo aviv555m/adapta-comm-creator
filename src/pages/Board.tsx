@@ -12,7 +12,7 @@ import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { EyeTrackingDot } from '@/components/EyeTrackingDot';
 import CalibrationOverlay from '@/components/CalibrationOverlay';
 import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
-import { selectBoardBasedOnAnswers } from '@/data/aacBoards';
+import { selectBoardBasedOnAnswers, AAC_BOARDS } from '@/data/aacBoards';
 import { BoardTile } from '@/types/board';
 import { AIChatBot } from '@/components/AIChatBot';
 import { AIControlPanel } from '@/components/AIControlPanel';
@@ -25,8 +25,10 @@ const navigate = useNavigate();
   const { toast } = useToast();
   const { language, t, toggleLanguage } = useLanguage();
   const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
-  const [currentCategory, setCurrentCategory] = useState('Most Used');
+  const [currentCategory, setCurrentCategory] = useState('All');
   const [aiControlPanelOpen, setAiControlPanelOpen] = useState(false);
+  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+  const [showMoreInCategory, setShowMoreInCategory] = useState(false);
   
   // Eye tracking
   const { 
@@ -55,17 +57,26 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     return p ? JSON.parse(p) : { name: '', interests: '' };
   });
 
-  // Generate board configuration based on quiz answers
+  // Generate board configuration based on quiz answers or manual selection
   const generateBoardConfig = () => {
-    const questionsForBoard = getSelectedBoard();
-    const selectedBoard = selectBoardBasedOnAnswers(questionsForBoard);
+    let selectedBoard;
+    
+    if (selectedBoardId) {
+      // Use manually selected board
+      selectedBoard = AAC_BOARDS.find(board => board.id === selectedBoardId) || AAC_BOARDS[0];
+    } else {
+      // Use quiz-based selection
+      const questionsForBoard = getSelectedBoard();
+      selectedBoard = selectBoardBasedOnAnswers(questionsForBoard);
+    }
     
     // Use the selected AAC board configuration
     return {
       tiles: selectedBoard.config.tiles,
       layout: selectedBoard.name,
       categories: selectedBoard.config.categories,
-      description: selectedBoard.description
+      description: selectedBoard.description,
+      boardId: selectedBoard.id
     };
   };
 
@@ -85,11 +96,12 @@ const [settings, setSettings] = useState<BoardSettings>(() => {
     if (currentCategory === 'All') {
       return tiles;
     } else if (currentCategory === 'Most Used') {
-      return getMostUsedTiles(tiles, 9); // Changed to 9 for consistency
+      return getMostUsedTiles(tiles, 9);
     } else {
-      // Get exactly 9 tiles from the selected category
+      // Get tiles from the selected category
       const categoryTiles = tiles.filter(tile => tile.category === currentCategory);
-      return categoryTiles.slice(0, 9);
+      // Show first 9 or all if "more" is activated
+      return showMoreInCategory ? categoryTiles : categoryTiles.slice(0, 9);
     }
   })();
 
@@ -239,7 +251,7 @@ const gridDesktopClass = 'grid-cols-3';
   return (
     <div className="app-container">
       <div className="app-card max-w-6xl">
-        {/* Welcome Message */}
+        {/* Welcome Message & Board Selector */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-lg text-blue-800 text-center">
             🌟 {t('welcomeMessage')}
@@ -247,6 +259,30 @@ const gridDesktopClass = 'grid-cols-3';
           <p className="text-sm text-blue-600 text-center mt-2">
             📋 Selected Board: {boardConfig.layout} - {boardConfig.description}
           </p>
+          
+          {/* Board Selector */}
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <p className="w-full text-center text-sm text-blue-700 font-medium mb-2">Choose a different board:</p>
+            {AAC_BOARDS.map((board) => (
+              <Button
+                key={board.id}
+                variant={boardConfig.boardId === board.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSelectedBoardId(board.id);
+                  setCurrentCategory('All');
+                  setShowMoreInCategory(false);
+                }}
+                className={`text-xs px-3 py-1 ${
+                  boardConfig.boardId === board.id 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'
+                }`}
+              >
+                {board.name}
+              </Button>
+            ))}
+          </div>
         </div>
         
         {/* Header */}
@@ -324,26 +360,28 @@ const gridDesktopClass = 'grid-cols-3';
         {/* Full Screen Board Area */}
         <div className="w-full min-h-[80vh]">
           {currentCategory === 'All' ? (
-            // Show Categories as full screen main tiles without descriptions
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
-              {availableCategories.map((category) => {
-                const categoryName = t('categoryNames', category);
+            // Show 9 Categories in 3x3 grid
+            <div className="grid grid-cols-3 gap-6 p-6 max-w-6xl mx-auto">
+              {availableCategories.slice(0, 9).map((category) => {
+                const categoryName = t('categoryNames', category) || category;
+                const categoryEmoji = getCategoryEmoji(category) || '📂';
                 return (
                   <Button
                     key={category}
                     variant="outline"
-                    className="p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20 min-h-[300px]"
+                    className="p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20 min-h-[200px]"
                     onClick={() => {
                       setCurrentCategory(category);
+                      setShowMoreInCategory(false);
                       speakText(categoryName);
                       toast({ title: categoryName, description: t('speakingNow'), duration: 1500 });
                     }}
                     title={categoryName}
                   >
-                    <span className="text-9xl mb-4 leading-none">
-                      {getCategoryEmoji(category)}
+                    <span className="text-8xl mb-4 leading-none">
+                      {categoryEmoji}
                     </span>
-                    <span className="text-lg font-bold leading-tight text-center break-words px-2">
+                    <span className="text-xl font-bold leading-tight text-center break-words px-2">
                       {categoryName}
                     </span>
                   </Button>
@@ -351,29 +389,30 @@ const gridDesktopClass = 'grid-cols-3';
               })}
             </div>
           ) : (
-            // Show Back to Categories button first, then 9 Tiles for selected category
+            // Show Category with tiles and More button
             <div className="flex flex-col items-center gap-6 p-6 min-h-[80vh]">
-              {/* Back to Categories Button in the middle */}
+              {/* Back to Categories Button */}
               <Button
                 variant="default"
-                className="h-24 w-80 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
+                className="h-20 w-72 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
                 onClick={() => {
                   setCurrentCategory('All');
+                  setShowMoreInCategory(false);
                   speakText(t('backToCategories'));
                   toast({ title: t('backToCategories'), description: t('returningToCategories'), duration: 1500 });
                 }}
               >
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-4xl">📋</span>
-                  <span className="text-xl font-bold">
-                    {language === 'he' ? '→ חזור לקטגוריות' : 'Back to Categories ←'}
+                  <span className="text-3xl">📋</span>
+                  <span className="text-lg font-bold">
+                    {language === 'he' ? '→ חזור לקטגוריות' : '← Back to Categories'}
                   </span>
                 </div>
               </Button>
 
-              {/* 9 Tiles for selected category in 3x3 grid */}
+              {/* Category Tiles in 3x3 grid */}
               <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
-                {filteredTiles.map((tile) => {
+                {filteredTiles.slice(0, 9).map((tile) => {
                   const translatedText = t('boardData', tile.text) || tile.text;
                   const tileDescription = getTileDescription(tile);
                   const simpleLabel = getSimpleLabel(tile);
@@ -381,7 +420,7 @@ const gridDesktopClass = 'grid-cols-3';
                     <Button
                       key={tile.id}
                       variant="outline"
-                      className={`p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[200px] ${
+                      className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[180px] ${
                         selectedTile?.id === tile.id 
                           ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
                           : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
@@ -391,11 +430,11 @@ const gridDesktopClass = 'grid-cols-3';
                       aria-label={simpleLabel}
                     >
                       {settings.showEmoji !== false && tile.emoji && (
-                        <span className="text-8xl mb-4 leading-none">{tile.emoji}</span>
+                        <span className="text-6xl mb-3 leading-none">{tile.emoji}</span>
                       )}
                       {settings.showLabels !== false && (
                         <>
-                          <span className="text-2xl font-bold leading-tight text-center mb-2 text-primary">
+                          <span className="text-lg font-bold leading-tight text-center mb-1 text-primary">
                             {simpleLabel}
                           </span>
                           <span className="text-xs text-muted-foreground leading-tight text-center px-2">
@@ -407,6 +446,78 @@ const gridDesktopClass = 'grid-cols-3';
                   );
                 })}
               </div>
+
+              {/* More Button - Show if there are more than 9 tiles in category */}
+              {(() => {
+                const categoryTiles = boardConfig.tiles.filter(tile => tile.category === currentCategory);
+                const hasMoreTiles = categoryTiles.length > 9;
+                
+                if (hasMoreTiles) {
+                  return (
+                    <Button
+                      variant="default"
+                      className="h-16 w-48 bg-orange-600 text-white hover:bg-orange-700 text-lg font-bold"
+                      onClick={() => {
+                        setShowMoreInCategory(!showMoreInCategory);
+                        const actionText = showMoreInCategory ? 'Show Less' : 'Show More';
+                        speakText(actionText);
+                        toast({ title: actionText, description: showMoreInCategory ? 'Showing fewer words' : 'Showing more words', duration: 1500 });
+                      }}
+                    >
+                      <span className="mr-2">{showMoreInCategory ? '📋' : '➕'}</span>
+                      {showMoreInCategory ? 'Show Less' : 'More Words'}
+                    </Button>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Additional tiles when "More" is activated */}
+              {showMoreInCategory && (() => {
+                const categoryTiles = boardConfig.tiles.filter(tile => tile.category === currentCategory);
+                const moreTiles = categoryTiles.slice(9); // Get tiles beyond the first 9
+                
+                if (moreTiles.length > 0) {
+                  return (
+                    <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
+                      {moreTiles.map((tile) => {
+                        const translatedText = t('boardData', tile.text) || tile.text;
+                        const tileDescription = getTileDescription(tile);
+                        const simpleLabel = getSimpleLabel(tile);
+                        return (
+                          <Button
+                            key={tile.id}
+                            variant="outline"
+                            className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[180px] ${
+                              selectedTile?.id === tile.id 
+                                ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
+                                : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
+                            }`}
+                            onClick={() => handleTileClick(tile)}
+                            title={`${simpleLabel} - ${tileDescription}`}
+                            aria-label={simpleLabel}
+                          >
+                            {settings.showEmoji !== false && tile.emoji && (
+                              <span className="text-6xl mb-3 leading-none">{tile.emoji}</span>
+                            )}
+                            {settings.showLabels !== false && (
+                              <>
+                                <span className="text-lg font-bold leading-tight text-center mb-1 text-primary">
+                                  {simpleLabel}
+                                </span>
+                                <span className="text-xs text-muted-foreground leading-tight text-center px-2">
+                                  {tileDescription}
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           )}
         </div>
