@@ -8,11 +8,6 @@ interface InteractionEvent {
   data: {
     tileId?: string;
     category?: string;
-    text?: string;
-    emoji?: string;
-    currentCategory?: string;
-    usageCount?: number;
-    sessionContext?: any;
     duration?: number;
     success?: boolean;
     errorType?: string;
