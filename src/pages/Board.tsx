@@ -1,607 +1,201 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings, Mic, RotateCcw, Volume2, Eye, EyeOff, Languages } from 'lucide-react';
-import { useQuiz } from '@/hooks/useQuiz';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import BoardSettingsDialog, { BoardSettings, ProfileData } from '@/components/BoardSettingsDialog';
-import { useEyeTracking } from '@/hooks/useEyeTracking';
-import { useUsageTracking } from '@/hooks/useUsageTracking';
-import { EyeTrackingDot } from '@/components/EyeTrackingDot';
-import CalibrationOverlay from '@/components/CalibrationOverlay';
-import { generateExpandedBoardData, getAllCategories, getCategoryEmoji } from '@/data/boardData';
-import { selectBoardBasedOnAnswers, AAC_BOARDS } from '@/data/aacBoards';
-import { BoardTile } from '@/types/board';
-import { AIChatBot } from '@/components/AIChatBot';
-import { AIControlPanel } from '@/components/AIControlPanel';
-import { useBehaviorAnalytics } from '@/hooks/useBehaviorAnalytics';
+import { Card } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/useLanguage';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AAC_BOARDS, getSelectedBoard, AACItem } from '@/data/aacBoards';
+import { useQuiz } from '@/hooks/useQuiz';
 
-const Board = () => {
-const navigate = useNavigate();
-  const { questions, resetQuiz, getSelectedBoard } = useQuiz();
-  const { toast } = useToast();
-  const { language, t, toggleLanguage } = useLanguage();
-  const [selectedTile, setSelectedTile] = useState<BoardTile | null>(null);
-  const [currentCategory, setCurrentCategory] = useState('All');
-  const [aiControlPanelOpen, setAiControlPanelOpen] = useState(false);
-  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
-  const [showMoreInCategory, setShowMoreInCategory] = useState(false);
+export default function Board() {
+  const { language } = useLanguage();
+  const { getSelectedBoard: getQuizBoard } = useQuiz();
+  const [currentSentence, setCurrentSentence] = useState<string[]>([]);
+  const [selectedBoard, setSelectedBoard] = useState('basic_simple');
+  const [navigationPath, setNavigationPath] = useState<AACItem[]>([]);
+  const [currentLevel, setCurrentLevel] = useState<AACItem[]>([]);
+
+  const board = getSelectedBoard(selectedBoard);
   
-  // Eye tracking
-  const { 
-    gaze, 
-    active, 
-    state, 
-    start, 
-    stop, 
-    startCalibration 
-  } = useEyeTracking();
-  
-  // Usage tracking and behavior analytics
-  const { trackTileUsage, getMostUsedTiles } = useUsageTracking();
-  const { trackInteraction, startSession, endSession } = useBehaviorAnalytics();
+  useEffect(() => {
+    // Quiz board selection is handled by the board selector
+    // Keep default board selection
+  }, []);
 
-  // Settings and Profile (persisted)
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [calibrationOpen, setCalibrationOpen] = useState(false);
-const [settings, setSettings] = useState<BoardSettings>(() => {
-  const s = localStorage.getItem('echoes_board_settings');
-  const parsed = s ? JSON.parse(s) : {};
-  return { voiceRate: 1, voicePitch: 1, tileSize: 5, gridColsMobile: 2, gridColsDesktop: 3, highContrast: false, showLabels: true, showEmoji: true, showGazeDot: true, ollamaUrl: 'http://localhost:11434', ollamaModel: 'llama3.2', ...parsed } as BoardSettings;
-});
-  const [profile, setProfile] = useState<ProfileData>(() => {
-    const p = localStorage.getItem('echoes_profile');
-    return p ? JSON.parse(p) : { name: '', interests: '' };
-  });
+  useEffect(() => {
+    if (board.structure.length > 0) {
+      setCurrentLevel(board.structure);
+    }
+  }, [board]);
 
-  // Generate board configuration based on quiz answers or manual selection
-  const generateBoardConfig = () => {
-    let selectedBoard;
-    
-    if (selectedBoardId) {
-      // Use manually selected board
-      selectedBoard = AAC_BOARDS.find(board => board.id === selectedBoardId) || AAC_BOARDS[0];
+  const handleItemClick = (item: AACItem) => {
+    if (item.children && item.children.length > 0) {
+      // Navigate deeper
+      setNavigationPath(prev => [...prev, item]);
+      setCurrentLevel(item.children);
     } else {
-      // Use quiz-based selection
-      const questionsForBoard = getSelectedBoard();
-      selectedBoard = selectBoardBasedOnAnswers(questionsForBoard);
+      // Add word to sentence
+      addToSentence(item.text);
     }
-    
-    // Use the selected AAC board configuration
-    return {
-      tiles: selectedBoard.config.tiles,
-      layout: selectedBoard.name,
-      categories: selectedBoard.config.categories,
-      description: selectedBoard.description,
-      boardId: selectedBoard.id
-    };
   };
 
-  const boardConfig = generateBoardConfig();
-  const categories = boardConfig.categories;
-  
-  // Filter tiles by current category and enabled categories from settings
-  const filteredTiles = (() => {
-    let tiles = boardConfig.tiles;
-    
-    // First, filter by enabled categories if specified in settings
-    if (settings.enabledCategories && settings.enabledCategories.length > 0) {
-      tiles = tiles.filter(tile => settings.enabledCategories!.includes(tile.category));
-    }
-    
-    // Then filter by current category selection
-    if (currentCategory === 'All') {
-      return tiles;
-    } else if (currentCategory === 'Most Used') {
-      return getMostUsedTiles(tiles, 9);
-    } else {
-      // Get tiles from the selected category
-      const categoryTiles = tiles.filter(tile => tile.category === currentCategory);
-      // Show first 9 or all if "more" is activated
-      return showMoreInCategory ? categoryTiles : categoryTiles.slice(0, 9);
-    }
-  })();
-
-  // Filter available categories based on enabled categories from settings
-  const availableCategories = settings.enabledCategories && settings.enabledCategories.length > 0
-    ? categories.filter(cat => settings.enabledCategories!.includes(cat))
-    : categories;
-
-  // Get user preferences for display
-  const getCommunicationStyle = () => {
-    const needs = questions.find(q => q.id === 1)?.value;
-    const experience = questions.find(q => q.id === 3)?.value;
-    return `${experience || 'Not specified'} user focusing on ${needs || 'general communication'}`;
-  };
-
-  const getUserInterests = () => {
-    const fromProfile = profile.interests?.trim();
-    return fromProfile || questions.find(q => q.id === 11)?.value || 'Not specified';
-  };
-
-  const getCategoryDescription = (category: string): string => {
-    const descriptions: Record<string, string> = {
-      'Communication': 'Express feelings, needs, and basic requests',
-      'Basic Needs': 'Essential daily activities and requirements',
-      'People': 'Family members, friends, and important people',
-      'Actions': 'Things you do and activities you enjoy',
-      'Feelings': 'Emotions and how you feel',
-      'Food': 'Meals, snacks, and favorite foods',
-      'Colors': 'Different colors and descriptions',
-      'Numbers': 'Numbers and counting activities',
-      'Animals': 'Pet names and animal sounds',
-      'Places': 'Locations you go to regularly',
-      'Objects': 'Things you use and see around you',
-      'Toys': 'Games and fun activities'
-    };
-    return descriptions[category] || 'Tap to explore this category';
-  };
-
-  const getSimpleLabel = (tile: BoardTile): string => {
-    // Always get the translated text from the translations system
-    // The emoji stays the same regardless of language
-    const translatedText = t('boardData', tile.text) || tile.text;
-    
-    // For simple labels, use the first 1-2 words of the translated text
-    return translatedText.split(' ').slice(0, 2).join(' ');
-  };
-
-  const getTileDescription = (tile: BoardTile): string => {
-    const descriptions: Record<string, string> = {
-      'hello': 'Greeting others politely',
-      'please': 'Making polite requests',
-      'thank you': 'Showing gratitude',
-      'yes': 'Agreeing or confirming',
-      'no': 'Disagreeing or refusing',
-      'help': 'Asking for assistance',
-      'more': 'Requesting additional items',
-      'stop': 'Asking to pause or end activity',
-      'finished': 'Indicating completion',
-      'want': 'Expressing desires',
-      'need': 'Expressing requirements',
-      'like': 'Showing preference'
-    };
-    return descriptions[tile.text.toLowerCase()] || `Use this to say "${tile.text}"`;
-  };
-
-const speakText = (text: string) => {
-  if (!('speechSynthesis' in window)) return;
-  const langCode = language === 'he' ? 'he-IL' : 'en-US';
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = settings.voiceRate ?? 1;
-  utterance.pitch = settings.voicePitch ?? 1;
-  utterance.lang = langCode;
-
-  // Try to select a voice matching language and preferred gender
-  const voices = speechSynthesis.getVoices();
-  const langVoices = voices.filter(v => v.lang && v.lang.startsWith(langCode));
-  const gender = settings.voiceGender;
-  const maleHints = ['male', 'daniel', 'david', 'george', 'james', 'asaf', 'tomer', 'zohar', 'guy'];
-  const femaleHints = ['female', 'samantha', 'victoria', 'sarah', 'hila', 'naomi', 'carmit', 'noa', 'shiri'];
-  let selected: SpeechSynthesisVoice | undefined;
-  if (gender === 'male') {
-    selected = langVoices.find(v => maleHints.some(h => v.name.toLowerCase().includes(h)));
-  } else if (gender === 'female') {
-    selected = langVoices.find(v => femaleHints.some(h => v.name.toLowerCase().includes(h)));
-  }
-  if (!selected && langVoices.length) {
-    selected = langVoices[0];
-  }
-  if (selected) utterance.voice = selected;
-
-  speechSynthesis.speak(utterance);
-};
-
-  const handleTileClick = (tile: BoardTile) => {
-    setSelectedTile(tile);
-    trackTileUsage(tile.id);
-    
-    // Track interaction for AI analysis
-    trackInteraction({
-      type: 'tile_click',
-      data: { 
-        tileId: tile.id, 
-        category: tile.category,
-        success: true 
+  const navigateBack = () => {
+    if (navigationPath.length > 0) {
+      const newPath = [...navigationPath];
+      newPath.pop();
+      setNavigationPath(newPath);
+      
+      if (newPath.length === 0) {
+        setCurrentLevel(board.structure);
+      } else {
+        const parent = newPath[newPath.length - 1];
+        setCurrentLevel(parent.children || []);
       }
-    });
-    
-    const translatedText = t('boardData', tile.text) || tile.text;
-    speakText(translatedText);
-    toast({ title: translatedText, description: t('speakingNow'), duration: 1500 });
-  };
-
-  const handleEyeTrackingToggle = async () => {
-    if (active) {
-      stop();
-      toast({ title: t('eyeTrackingStopped'), description: t('eyeTrackingStopped') });
-    } else {
-      // Open calibration overlay instead of direct calibration
-      setCalibrationOpen(true);
     }
   };
 
-  const handleNewSetup = () => {
-    if (confirm('Start a new setup? This will clear all current answers.')) {
-      resetQuiz();
-      navigate('/quiz');
+  const resetToCategories = () => {
+    setNavigationPath([]);
+    setCurrentLevel(board.structure);
+  };
+
+  const addToSentence = (word: string) => {
+    setCurrentSentence(prev => [...prev, word]);
+    toast.success(`Added "${word}" to sentence`);
+  };
+
+  const speakSentence = () => {
+    if (currentSentence.length > 0) {
+      const text = currentSentence.join(' ');
+      const utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utterance);
+      toast.success(`Speaking: "${text}"`);
     }
   };
 
-// Calculate tile size based on 1-10 scale where 10 = 2.5x larger than base
-const baseTileHeight = 180; // very big buttons
-const tileSizeValue = typeof settings.tileSize === 'number' ? settings.tileSize : 5;
-const scaleFactor = 1 + ((tileSizeValue - 5) * 0.3); // Scale from 0.4 to 2.5
-const calculatedHeight = Math.round(baseTileHeight * scaleFactor);
-const tileHeightStyle = { height: `${calculatedHeight}px` };
+  const clearSentence = () => {
+    setCurrentSentence([]);
+    toast.info('Sentence cleared');
+  };
 
-// Force 3 columns layout for very big buttons
-const gridMobileClass = 'grid-cols-3';
-const gridDesktopClass = 'grid-cols-3';
-
-  // Start session tracking when component mounts
-  React.useEffect(() => {
-    startSession();
-    return () => endSession();
-  }, [startSession, endSession]);
+  const currentItems = currentLevel.slice(0, 9);
 
   return (
-    <div className="app-container">
-      <div className="app-card max-w-6xl">
-        {/* Welcome Message & Board Selector */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-lg text-blue-800 text-center">
-            🌟 {t('welcomeMessage')}
-          </p>
-          <p className="text-sm text-blue-600 text-center mt-2">
-            📋 Selected Board: {boardConfig.layout} - {boardConfig.description}
-          </p>
-          
-          {/* Board Selector */}
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <p className="w-full text-center text-sm text-blue-700 font-medium mb-2">Choose a different board:</p>
-            {AAC_BOARDS.map((board) => (
-              <Button
-                key={board.id}
-                variant={boardConfig.boardId === board.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSelectedBoardId(board.id);
-                  setCurrentCategory('All');
-                  setShowMoreInCategory(false);
-                }}
-                className={`text-xs px-3 py-1 ${
-                  boardConfig.boardId === board.id 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'
-                }`}
-              >
-                {board.name}
-              </Button>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen bg-background p-4">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-center mb-4">
+          AAC Communication Board
+        </h1>
+        <p className="text-center text-muted-foreground mb-4">
+          Welcome to your {board.name} - {board.description}
+        </p>
         
-        {/* Header */}
-        <div className={`flex justify-between items-center mb-6 ${language === 'he' ? 'flex-row-reverse' : ''}`}>
-          <div className={language === 'he' ? 'text-right' : ''}>
-            <h1 className="text-2xl font-bold text-foreground">{language === 'he' ? t('echoesBoard2') : t('echoesBoard')}</h1>
-            <p className="text-muted-foreground">{t('layout')}: {boardConfig.layout}</p>
-          </div>
-          <div className={`flex space-x-2 ${language === 'he' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-            <Button
-              variant="outline"
-              onClick={toggleLanguage}
-              className="secondary-button"
-              title="Toggle Language"
-            >
-              <Languages className="h-4 w-4 mr-1" />
-              {language === 'en' ? 'עברית' : 'English'}
-            </Button>
-            <Button
-              variant="default"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => setSettingsOpen(true)}
-              title="Open settings"
-            >
-              <span className="mr-1">⚙️</span>
-              <Settings className="h-4 w-4 mr-1" />
-              {t('settings')}
-            </Button>
-            <Button
-              variant="default"
-              className="bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => setAiControlPanelOpen(true)}
-            >
-              <span className="mr-1">🤖</span>
-              <Volume2 className="h-4 w-4 mr-1" />
-              {t('aiAdapt')}
-            </Button>
-            <Button
-              variant="default"
-              className="bg-green-600 text-white hover:bg-green-700"
-              onClick={() => {
-                if (selectedTile) {
-                  const translatedText = t('boardData', selectedTile.text) || selectedTile.text;
-                  speakText(translatedText);
-                } else {
-                  toast({
-                    title: t('noTileSelected'),
-                    description: t('tapTileFirst'),
-                  });
-                }
-              }}
-            >
-              <span className="mr-1">▶️</span>
-              <Mic className="h-4 w-4 mr-1" />
-              {t('ready')}
-            </Button>
-            <Button
-              variant="default"
-              className={`${
-                active 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
-                  : 'bg-orange-600 text-white hover:bg-orange-700'
-              } ${state.isCalibrating ? 'animate-pulse' : ''}`}
-              onClick={handleEyeTrackingToggle}
-              disabled={state.isCalibrating}
-              title={active ? 'Stop eye tracking' : 'Start eye tracking'}
-            >
-              <span className="mr-1">👁️</span>
-              {active ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-              {state.isCalibrating ? t('calibrating') : active ? t('eyeOff') : t('eyeTrack')}
-            </Button>
-          </div>
+        {/* Board Selector */}
+        <div className="flex justify-center mb-4">
+          <Select value={selectedBoard} onValueChange={setSelectedBoard}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Select a board" />
+            </SelectTrigger>
+            <SelectContent>
+              {AAC_BOARDS.map((board) => (
+                <SelectItem key={board.id} value={board.id}>
+                  {board.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Full Screen Board Area */}
-        <div className="w-full min-h-[80vh]">
-          {currentCategory === 'All' ? (
-            // Show 9 Categories in 3x3 grid
-            <div className="grid grid-cols-3 gap-6 p-6 max-w-6xl mx-auto">
-              {availableCategories.slice(0, 9).map((category) => {
-                const categoryName = t('categoryNames', category) || category;
-                const categoryEmoji = getCategoryEmoji(category) || '📂';
-                return (
-                  <Button
-                    key={category}
-                    variant="outline"
-                    className="p-8 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center border-border hover:border-primary hover:bg-accent/20 min-h-[200px]"
-                    onClick={() => {
-                      setCurrentCategory(category);
-                      setShowMoreInCategory(false);
-                      speakText(categoryName);
-                      toast({ title: categoryName, description: t('speakingNow'), duration: 1500 });
-                    }}
-                    title={categoryName}
-                  >
-                    <span className="text-8xl mb-4 leading-none">
-                      {categoryEmoji}
-                    </span>
-                    <span className="text-xl font-bold leading-tight text-center break-words px-2">
-                      {categoryName}
-                    </span>
-                  </Button>
-                );
-              })}
-            </div>
-          ) : (
-            // Show Category with tiles and More button
-            <div className="flex flex-col items-center gap-6 p-6 min-h-[80vh]">
-              {/* Back to Categories Button */}
-              <Button
-                variant="default"
-                className="h-20 w-72 bg-blue-600 text-white hover:bg-blue-700 px-4 py-3 shadow-lg"
-                onClick={() => {
-                  setCurrentCategory('All');
-                  setShowMoreInCategory(false);
-                  speakText(t('backToCategories'));
-                  toast({ title: t('backToCategories'), description: t('returningToCategories'), duration: 1500 });
-                }}
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-3xl">📋</span>
-                  <span className="text-lg font-bold">
-                    {language === 'he' ? '→ חזור לקטגוריות' : '← Back to Categories'}
-                  </span>
-                </div>
+        {/* Navigation Breadcrumb */}
+        {navigationPath.length > 0 && (
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={resetToCategories}>
+                Home
               </Button>
-
-              {/* Category Tiles in 3x3 grid */}
-              <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
-                {filteredTiles.slice(0, 9).map((tile) => {
-                  const translatedText = t('boardData', tile.text) || tile.text;
-                  const tileDescription = getTileDescription(tile);
-                  const simpleLabel = getSimpleLabel(tile);
-                  return (
-                    <Button
-                      key={tile.id}
-                      variant="outline"
-                      className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[180px] ${
-                        selectedTile?.id === tile.id 
-                          ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                          : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                      }`}
-                      onClick={() => handleTileClick(tile)}
-                      title={`${simpleLabel} - ${tileDescription}`}
-                      aria-label={simpleLabel}
-                    >
-                      {settings.showEmoji !== false && tile.emoji && (
-                        <span className="text-6xl mb-3 leading-none">{tile.emoji}</span>
-                      )}
-                      {settings.showLabels !== false && (
-                        <>
-                          <span className="text-lg font-bold leading-tight text-center mb-1 text-primary">
-                            {simpleLabel}
-                          </span>
-                          <span className="text-xs text-muted-foreground leading-tight text-center px-2">
-                            {tileDescription}
-                          </span>
-                        </>
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              {/* More Button - Show if there are more than 9 tiles in category */}
-              {(() => {
-                const categoryTiles = boardConfig.tiles.filter(tile => tile.category === currentCategory);
-                const hasMoreTiles = categoryTiles.length > 9;
-                
-                if (hasMoreTiles) {
-                  return (
-                    <Button
-                      variant="default"
-                      className="h-16 w-48 bg-orange-600 text-white hover:bg-orange-700 text-lg font-bold"
-                      onClick={() => {
-                        setShowMoreInCategory(!showMoreInCategory);
-                        const actionText = showMoreInCategory ? 'Show Less' : 'Show More';
-                        speakText(actionText);
-                        toast({ title: actionText, description: showMoreInCategory ? 'Showing fewer words' : 'Showing more words', duration: 1500 });
-                      }}
-                    >
-                      <span className="mr-2">{showMoreInCategory ? '📋' : '➕'}</span>
-                      {showMoreInCategory ? 'Show Less' : 'More Words'}
-                    </Button>
-                  );
-                }
-                return null;
-              })()}
-
-              {/* Additional tiles when "More" is activated */}
-              {showMoreInCategory && (() => {
-                const categoryTiles = boardConfig.tiles.filter(tile => tile.category === currentCategory);
-                const moreTiles = categoryTiles.slice(9); // Get tiles beyond the first 9
-                
-                if (moreTiles.length > 0) {
-                  return (
-                    <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
-                      {moreTiles.map((tile) => {
-                        const translatedText = t('boardData', tile.text) || tile.text;
-                        const tileDescription = getTileDescription(tile);
-                        const simpleLabel = getSimpleLabel(tile);
-                        return (
-                          <Button
-                            key={tile.id}
-                            variant="outline"
-                            className={`p-6 text-center whitespace-normal text-wrap border-2 transition-all flex flex-col items-center justify-center min-h-[180px] ${
-                              selectedTile?.id === tile.id 
-                                ? (settings.highContrast ? 'border-primary bg-primary/10' : 'border-primary/60 bg-accent/30')
-                                : (settings.highContrast ? 'border-foreground hover:bg-accent' : 'border-border hover:border-primary hover:bg-accent/20')
-                            }`}
-                            onClick={() => handleTileClick(tile)}
-                            title={`${simpleLabel} - ${tileDescription}`}
-                            aria-label={simpleLabel}
-                          >
-                            {settings.showEmoji !== false && tile.emoji && (
-                              <span className="text-6xl mb-3 leading-none">{tile.emoji}</span>
-                            )}
-                            {settings.showLabels !== false && (
-                              <>
-                                <span className="text-lg font-bold leading-tight text-center mb-1 text-primary">
-                                  {simpleLabel}
-                                </span>
-                                <span className="text-xs text-muted-foreground leading-tight text-center px-2">
-                                  {tileDescription}
-                                </span>
-                              </>
-                            )}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+              {navigationPath.map((item, index) => (
+                <span key={index} className="flex items-center gap-2">
+                  <span>›</span>
+                  <span>{item.text}</span>
+                </span>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Bottom Actions */}
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
-          <Button
-            variant="outline"
-            onClick={handleNewSetup}
-            className="secondary-button"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            <span className="mr-1">🔄</span>
-            {t('newSetup')}
-          </Button>
-          
-          <div className="text-sm text-muted-foreground">
-            {t('generatedFromQuiz')} • {boardConfig.tiles.length} {t('tilesAvailable')}
+        {/* Back Button */}
+        {navigationPath.length > 0 && (
+          <div className="flex justify-center mb-4">
+            <Button variant="outline" onClick={navigateBack}>
+              ← Back
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Sentence Builder */}
+      <div className="mb-6 p-4 bg-muted rounded-lg">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-lg font-medium">
+              Sentence: {currentSentence.length > 0 ? currentSentence.join(' ') : 'Tap words to build a sentence...'}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={speakSentence} disabled={currentSentence.length === 0}>
+              🔊 Speak
+            </Button>
+            <Button variant="outline" onClick={clearSentence} disabled={currentSentence.length === 0}>
+              Clear
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Settings Dialog */}
-        <BoardSettingsDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          initialSettings={settings}
-          initialProfile={profile}
-          onSave={(s, p) => {
-            setSettings(s);
-            setProfile(p);
-            localStorage.setItem('echoes_board_settings', JSON.stringify(s));
-            localStorage.setItem('echoes_profile', JSON.stringify(p));
-            toast({ title: 'Settings saved', description: 'Your preferences have been updated.' });
-          }}
-        />
-
-        {/* Eye Tracking Dot */}
-        <EyeTrackingDot 
-          x={gaze?.x || 0} 
-          y={gaze?.y || 0} 
-          isVisible={(settings.showGazeDot ?? true) && active && !!gaze} 
-        />
-
-        {/* Calibration Overlay */}
-        <CalibrationOverlay
-          open={calibrationOpen}
-          onClose={() => {
-            setCalibrationOpen(false);
-            if (state.isCalibrated) {
-              toast({ 
-                title: t('eyeTrackingReady'), 
-                description: t('calibrationCompleted')
-              });
-            }
-          }}
-        />
-
-        {/* AI Chat Bot */}
-        <AIChatBot
-          currentSettings={settings}
-          onUpdateSettings={(newSettings) => {
-            const updatedSettings = { ...settings, ...newSettings };
-            setSettings(updatedSettings);
-            localStorage.setItem('echoes_board_settings', JSON.stringify(updatedSettings));
-          }}
-          onTrackInteraction={(type, data) => {
-            trackInteraction({ type: type as any, data });
-          }}
-        />
-
-        {/* AI Control Panel */}
-        <AIControlPanel
-          isOpen={aiControlPanelOpen}
-          onClose={() => setAiControlPanelOpen(false)}
-          currentSettings={settings}
-          onUpdateSettings={(newSettings) => {
-            const updatedSettings = { ...settings, ...newSettings };
-            setSettings(updatedSettings);
-            localStorage.setItem('echoes_board_settings', JSON.stringify(updatedSettings));
-          }}
-        />
+      {/* Main Grid */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {currentItems.map((item) => (
+          <Card 
+            key={item.id}
+            className="p-4 hover:bg-accent cursor-pointer transition-colors border-2 hover:border-primary"
+            onClick={() => handleItemClick(item)}
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-2">
+                {item.emoji}
+              </div>
+              <div className="font-medium">
+                {item.text}
+              </div>
+              {item.children && item.children.length > 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  ({item.children.length} items)
+                </div>
+              )}
+            </div>
+          </Card>
+        ))}
+        
+        {/* More button - shows remaining items */}
+        {currentLevel.length > 9 && (
+          <Card 
+            className="p-4 hover:bg-accent cursor-pointer transition-colors border-2 hover:border-primary bg-muted"
+            onClick={() => {
+              // Show next 9 items by cycling through
+              const nextItems = currentLevel.slice(9);
+              setCurrentLevel([...nextItems, ...currentLevel.slice(0, 9)]);
+            }}
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-2">➕</div>
+              <div className="font-medium">More</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                ({currentLevel.length - 9} more)
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
-};
-
-export default Board;
+}
