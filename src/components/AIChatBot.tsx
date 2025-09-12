@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { BoardSettings } from './BoardSettingsDialog';
-import { useLanguage } from '@/hooks/useLanguage';
-import { useQuiz } from '@/hooks/useQuiz';
 
 interface Message {
   id: string;
@@ -19,93 +17,21 @@ interface Message {
 interface AIChatBotProps {
   onUpdateSettings: (settings: Partial<BoardSettings>) => void;
   currentSettings: BoardSettings;
-  onTrackInteraction?: (type: string, data: any) => void;
 }
 
-interface QuizPersonalization {
-  communicationStyle: string;
-  favoriteTopics: string;
-  primaryLanguage: string;
-  messageStyle: string;
-  visualPreference: string;
-  voicePreference: string;
-  emotionalNeeds: string;
-  adaptiveLevel: string;
-  emergencyNeeds: string;
-  contextAwareness: string;
-}
-
-export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings, onTrackInteraction }) => {
-  const { language, t } = useLanguage();
-  const { questions } = useQuiz();
+export const AIChatBot: React.FC<AIChatBotProps> = ({ onUpdateSettings, currentSettings }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
-
-  // Get personalization from quiz answers
-  const getPersonalization = (): QuizPersonalization => {
-    const answers = questions.reduce((acc, q) => {
-      if (q.status === 'answered' && q.value) {
-        acc[q.id] = q.value;
-      }
-      return acc;
-    }, {} as Record<number, string>);
-
-    return {
-      communicationStyle: answers[1] || 'mixed',
-      favoriteTopics: answers[2] || 'general',
-      primaryLanguage: answers[3] || (language === 'he' ? '🇮🇱 Hebrew' : '🇬🇧 English'),
-      messageStyle: answers[4] || 'mixed',
-      visualPreference: answers[5] || 'mixed',
-      voicePreference: answers[6] || 'neutral',
-      emotionalNeeds: answers[7] || 'general',
-      adaptiveLevel: answers[8] || 'sometimes',
-      emergencyNeeds: answers[9] || 'general',
-      contextAwareness: answers[10] || 'consistent'
-    };
-  };
-
-  const getWelcomeMessage = () => {
-    const personalization = getPersonalization();
-    
-    if (language === 'he') {
-      return `שלום! אני העוזר החכם של לוח התקשורת שלך. 
-
-בהתבסס על התשובות שלך בשאלון, אני יכול לעזור לך להתאים את הלוח במיוחד עבורך:
-
-${personalization.communicationStyle.includes('Point') ? '• אתה אוהב להצביע - אני יכול להגדיל כפתורים' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• אתה אוהב משחקים - אני יכול להוסיף קטגוריות משחקים' : ''}
-${personalization.voicePreference.includes('Child') ? '• אתה רוצה קול של ילד - אני יכול לשנות את הקול' : ''}
-
-נסה דברים כמו:
-• 'תעשה את הכפתורים יותר גדולים'
-• 'תשנה את מהירות הקול לאטי יותר'
-• 'תראה רק משחקים ורגשות'`;
-    } else {
-      return `Hello! I'm your smart AAC assistant.
-
-Based on your quiz answers, I can help customize your board specifically for you:
-
-${personalization.communicationStyle.includes('Point') ? '• You like pointing - I can make buttons bigger' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• You love games - I can add game categories' : ''}
-${personalization.voicePreference.includes('Child') ? '• You want a child\'s voice - I can change the voice' : ''}
-
-Try things like:
-• 'Make the buttons bigger'
-• 'Change voice to slower'
-• 'Show only games and emotions'`;
-    }
-  };
-
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: getWelcomeMessage(),
+      content: "Hi! I'm your AAC board assistant. I can help you customize your board. Try things like:\n\n• 'Make the tiles bigger'\n• 'Change the voice speed to slower'\n• 'Use high contrast mode'\n• 'Show 4 columns' or 'use 2 columns on mobile'\n• 'Hide labels' / 'Show emojis'\n• 'Hide the gaze dot'",
       isUser: false,
       timestamp: new Date()
     }
   ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   const processMessage = async (message: string) => {
     setIsProcessing(true);
@@ -137,11 +63,9 @@ Try things like:
     // Apply changes if any
     if (response.settings) {
       onUpdateSettings(response.settings);
-      // Track AI-initiated changes
-      onTrackInteraction?.('ai_adaptation', { settings: response.settings, confidence: 0.9 });
       toast({
-        title: 'הבינה המלאכותית עדכנה את הלוח',
-        description: response.message,
+        title: 'Settings Updated',
+        description: 'Your board has been customized!',
       });
     }
     
@@ -160,55 +84,23 @@ Try things like:
   };
 
   const interpretMessage = async (message: string): Promise<{ message: string; settings?: Partial<BoardSettings> }> => {
-    const personalization = getPersonalization();
-    
     // Try Ollama first, fallback to local processing
     try {
       if (currentSettings.ollamaUrl && currentSettings.ollamaModel) {
-        const systemPrompt = language === 'he' ? 
-          `אתה עוזר AAC מתקדם עם שליטה מלאה בלוח התקשורת. אתה יכול לשנות כל הגדרה.
-
-פרטי התאמה אישית מהשאלון:
-- סגנון תקשורת: ${personalization.communicationStyle}
-- נושאים מועדפים: ${personalization.favoriteTopics}  
-- קול מועדף: ${personalization.voicePreference}
-- צרכים רגשיים: ${personalization.emotionalNeeds}
-
-הגדרות שאתה יכול לשנות:
-- tileSize (1-10): גודל כפתורים
-- voiceRate (0.5-2): מהירות דיבור
-- voiceGender: מין הקול
-- highContrast: ניגודיות גבוהה
-- showLabels: הצגת תוויות
-- enabledCategories: קטגוריות פעילות
-
-תן תגובות קצרות בעברית. החל שינויים מיידיים כשמתבקש.` :
-          `You are an advanced AAC assistant with FULL CONTROL over the communication board.
-
-Child's personalization from quiz:
-- Communication style: ${personalization.communicationStyle}
-- Favorite topics: ${personalization.favoriteTopics}
-- Voice preference: ${personalization.voicePreference}
-- Emotional needs: ${personalization.emotionalNeeds}
-
-Settings you can change:
-- tileSize (1-10): Button size
-- voiceRate (0.5-2): Speech speed
-- voiceGender: Voice gender
-- highContrast: High contrast mode
-- showLabels: Show/hide labels
-- enabledCategories: Active categories
-
-Respond concisely in English. Apply changes immediately when requested.`;
-
         const ollamaResponse = await fetch(`${currentSettings.ollamaUrl}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: currentSettings.ollamaModel,
             messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: message }
+              {
+                role: 'system',
+                content: `You are an AAC (Augmentative and Alternative Communication) assistant. Help users customize their communication board. You can modify these settings: tileSize (1-10), voiceRate (0.5-2), voicePitch (0.5-2), highContrast (true/false), showLabels (true/false), showEmoji (true/false), showGazeDot (true/false), enabledCategories (array). Respond with helpful advice and if making changes, mention them clearly. Current settings: ${JSON.stringify(currentSettings)}`
+              },
+              {
+                role: 'user', 
+                content: message
+              }
             ],
             stream: false
           })
@@ -216,7 +108,7 @@ Respond concisely in English. Apply changes immediately when requested.`;
 
         if (ollamaResponse.ok) {
           const data = await ollamaResponse.json();
-          const aiResponse = data.message?.content || data.response || (language === 'he' ? 'עיבדתי את הבקשה!' : 'I processed your request!');
+          const aiResponse = data.message?.content || data.response || 'I processed your request!';
           
           // Parse any settings changes from AI response
           const settingsUpdate = parseSettingsFromResponse(aiResponse, message);
@@ -231,70 +123,26 @@ Respond concisely in English. Apply changes immediately when requested.`;
       console.log('Ollama not available, using local processing');
     }
 
-    // Fallback to local processing with personalization
+    // Fallback to local processing
     const text = message.trim();
     const lowercaseMsg = text.toLowerCase();
     let responseMessage = '';
     let settingsUpdate: Partial<BoardSettings> = {};
 
-    // Apply personalized defaults based on quiz
-    const applyPersonalizedSettings = (): Partial<BoardSettings> => {
-      const settings: Partial<BoardSettings> = {};
-      
-      // Voice preferences from quiz
-      if (personalization.voicePreference.includes('Child')) {
-        settings.voiceGender = 'female';
-        settings.voicePitch = 1.3;
-      } else if (personalization.voicePreference.includes('Man')) {
-        settings.voiceGender = 'male';
-      } else if (personalization.voicePreference.includes('Woman')) {
-        settings.voiceGender = 'female';
-      }
-
-      // Communication style adjustments
-      if (personalization.communicationStyle.includes('Point')) {
-        settings.tileSize = 7; // Larger tiles for pointing
-      } else if (personalization.communicationStyle.includes('Look')) {
-        settings.showGazeDot = true; // Enable eye tracking dot
-      }
-
-      // Topic preferences
-      const categories = [];
-      if (personalization.favoriteTopics.includes('Games')) {
-        categories.push('Activities', 'Toys', 'Games');
-      }
-      if (personalization.favoriteTopics.includes('School')) {
-        categories.push('School', 'Numbers', 'Colors');
-      }
-      if (personalization.favoriteTopics.includes('Family')) {
-        categories.push('People', 'Home', 'Emotions');
-      }
-      if (categories.length > 0) {
-        settings.enabledCategories = [...new Set([...categories, 'Core', 'Basic Needs'])];
-      }
-
-      return settings;
-    };
-
+    // Conversational AI responses - not just settings changes
+    
     // Greetings and casual conversation
-    if (/^(hi|hello|hey|good morning|good afternoon|שלום|היי)/.test(lowercaseMsg)) {
-      const personalizedGreeting = language === 'he' ? 
-        `שלום! אני העוזר החכם שלך. בהתבסס על השאלון שלך, אני יודע שאתה:
+    if (/^(hi|hello|hey|good morning|good afternoon)/.test(lowercaseMsg)) {
+      responseMessage = `Hello! I'm your AAC assistant. I'm here to help make your communication board work perfectly for you. 
 
-${personalization.communicationStyle.includes('Point') ? '• אוהב להצביע - אני יכול להגדיל כפתורים' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• אוהב משחקים - יש לי קטגוריות מיוחדות' : ''}
-${personalization.voicePreference.includes('Child') ? '• רוצה קול של ילד - אני יכול לשנות' : ''}
+Some things I can help with:
+• Customize how your board looks and feels
+• Explain how different features work
+• Suggest better ways to organize your tiles
+• Help with eye tracking setup
+• Answer questions about AAC communication
 
-מה תרצה לשפר היום?` :
-        `Hello! I'm your smart assistant. Based on your quiz, I know you:
-
-${personalization.communicationStyle.includes('Point') ? '• Like pointing - I can make buttons bigger' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• Love games - I have special categories' : ''}
-${personalization.voicePreference.includes('Child') ? '• Want a child\'s voice - I can change it' : ''}
-
-What would you like to improve today?`;
-      
-      responseMessage = personalizedGreeting;
+What would you like to explore today?`;
     }
     
     // Ask for help or capabilities
@@ -420,27 +268,15 @@ Tell me exactly what's happening and I'll help fix it!`;
       }
     }
 
-    // Personalized quick setup
-    else if (/(setup|optimize|personalize|התאם|אישי)/.test(lowercaseMsg)) {
-      settingsUpdate = applyPersonalizedSettings();
-      responseMessage = language === 'he' ?
-        'התאמתי את הלוח בהתבסס על השאלון שלך! שינויים:\n• גודל כפתורים מותאם\n• קול מועדף\n• קטגוריות שאתה אוהב' :
-        'I\'ve personalized your board based on your quiz! Changes:\n• Optimized tile size\n• Preferred voice\n• Your favorite categories';
-    }
-
-    // Settings changes with enhanced responses  
-    else if (/(bigger|larger|large|גדול)/.test(lowercaseMsg) && /(tile|כפתור)/.test(lowercaseMsg)) {
-      settingsUpdate.tileSize = personalization.communicationStyle.includes('Point') ? 9 : 8;
-      responseMessage = language === 'he' ?
-        'הגדלתי את הכפתורים! זה מושלם בשבילך כי אתה אוהב להצביע.' :
-        "Perfect! I've made the tiles larger. Great for pointing and easier selection.";
+    // Settings changes with enhanced responses
+    else if (/(bigger|larger|large)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
+      settingsUpdate.tileSize = 8;
+      responseMessage = "Perfect! I've made the tiles larger. Large tiles are great for:\n• Easier eye tracking accuracy\n• Better for motor difficulties\n• Clearer visual targets\n\nYou'll have fewer tiles per screen but they'll be much easier to select.";
     }
     
-    else if (/(smaller|small|קטן)/.test(lowercaseMsg) && /(tile|כפתור)/.test(lowercaseMsg)) {
+    else if (/(smaller|small)/.test(lowercaseMsg) && /tile/.test(lowercaseMsg)) {
       settingsUpdate.tileSize = 3;
-      responseMessage = language === 'he' ?
-        'הקטנתי את הכפתורים. עכשיו יש יותר מילים על המסך.' :
-        'Tiles are now smaller. More vocabulary visible at once.';
+      responseMessage = 'Tiles are now smaller. This gives you:\n• More vocabulary visible at once\n• Faster navigation between topics\n• Better for advanced users\n\nIf they become hard to select, just ask me to make them bigger again!';
     }
 
     // Categories management with better feedback
@@ -471,66 +307,33 @@ What would you like to change?`;
       }
     }
 
-    // Voice adjustments with personalization
-    else if (/(voice|speech|קול|דיבור)/.test(lowercaseMsg)) {
-      if (/(faster|speed up|quick|מהיר)/.test(lowercaseMsg)) {
+    // Voice adjustments with explanations
+    else if (/(voice|speech)/.test(lowercaseMsg)) {
+      if (/(faster|speed up|quick)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-        responseMessage = language === 'he' ? 'הקול עכשיו יותר מהיר.' : 'Voice is now faster.';
-      }
-      else if (/(slower|slow down|אטי)/.test(lowercaseMsg)) {
+        responseMessage = "Voice speed increased! Faster speech is great for:\n• Experienced AAC users\n• Quick conversations\n• Reducing wait time\n\nToo fast? Just ask me to slow it down.";
+      } else if (/(slower|slow down)/.test(lowercaseMsg)) {
         settingsUpdate.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
-        responseMessage = language === 'he' ? 'הקול עכשיו יותר אטי.' : 'Voice is now slower.';
-      }
-      else if (/(child|kid|ילד)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'female';
-        settingsUpdate.voicePitch = 1.4;
-        responseMessage = language === 'he' ? 'החלפתי לקול של ילד.' : 'Changed to child\'s voice.';
-      }
-      else if (/(male|man|גבר)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'male';
-        responseMessage = language === 'he' ? 'החלפתי לקול גברי.' : 'Changed to male voice.';
-      }
-      else if (/(female|woman|אישה)/.test(lowercaseMsg)) {
-        settingsUpdate.voiceGender = 'female';
-        responseMessage = language === 'he' ? 'החלפתי לקול נשי.' : 'Changed to female voice.';
-      }
-      else {
-        // Apply personalized voice preference
-        if (personalization.voicePreference.includes('Child')) {
-          settingsUpdate.voiceGender = 'female';
-          settingsUpdate.voicePitch = 1.3;
-          responseMessage = language === 'he' ? 'שינתי לקול הילד המועדף עליך.' : 'Changed to your preferred child voice.';
-        } else {
-          responseMessage = language === 'he' ? 'עדכנתי הגדרות קול.' : 'Updated voice settings.';
-        }
+        responseMessage = 'Voice slowed down. Slower speech helps with:\n• Better comprehension\n• Learning new words\n• Giving listeners time to understand\n\nPerfect for new AAC users!';
+      } else if (/(male|man)/.test(lowercaseMsg)) {
+        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
+      } else if (/(female|woman)/.test(lowercaseMsg)) {
+        responseMessage = "Voice preferences noted! You can adjust voice settings in the settings panel.";
       }
     }
 
-    // Default helpful response with personalization
+    // Default helpful response
     else {
-      const personalizedHelp = language === 'he' ?
-        `אני כאן לעזור! הבנתי שאמרת "${message}".
+      responseMessage = `I'm here to help! I understand you mentioned "${message}". 
 
-בהתבסס על השאלון שלך, אני יכול לעזור עם:
-${personalization.communicationStyle.includes('Point') ? '• הגדלת כפתורים למגע מדויק יותר' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• הוספת קטגוריות משחקים' : ''}
-${personalization.voicePreference.includes('Child') ? '• שינוי לקול ילד' : ''}
-• **הגדרות** - "תגדיל כפתורים", "קול אטי יותר"
-• **קטגוריות** - "תראה רק משחקים", "תוסיף חיות"
+I can assist with:
+• **Settings** - "make tiles bigger", "slower voice", "high contrast"
+• **Categories** - "add animals", "show only basic needs"  
+• **Eye tracking** - "calibrate tracking", "make selection faster"
+• **Questions** - "how does eye tracking work?", "what is AAC?"
+• **Problems** - "voice not working", "tracking is off"
 
-מה תרצה לשפר?` :
-        `I'm here to help! I understand you mentioned "${message}".
-
-Based on your quiz, I can help with:
-${personalization.communicationStyle.includes('Point') ? '• Making buttons bigger for better pointing' : ''}
-${personalization.favoriteTopics.includes('Games') ? '• Adding game categories' : ''}
-${personalization.voicePreference.includes('Child') ? '• Changing to child voice' : ''}
-• **Settings** - "make tiles bigger", "slower voice"
-• **Categories** - "show only games", "add animals"
-
-What would you like to improve?`;
-      
-      responseMessage = personalizedHelp;
+What would you like help with?`;
     }
 
     return {
@@ -550,17 +353,10 @@ What would you like to improve?`;
       settings.tileSize = 3;
     }
     
-    if (/(faster|speed up)/.test(lowerMsg) && /(voice|speak)/.test(lowerMsg)) {
+    if (/(faster|speed up)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
       settings.voiceRate = Math.min((currentSettings.voiceRate || 1) + 0.3, 2);
-    } else if (/(slower|slow down)/.test(lowerMsg) && /(voice|speak)/.test(lowerMsg)) {
+    } else if (/(slower|slow down)/.test(lowerMsg) && /voice/.test(lowerMsg)) {
       settings.voiceRate = Math.max((currentSettings.voiceRate || 1) - 0.3, 0.5);
-    }
-
-    if (/(male|man)/.test(lowerMsg)) {
-      settings.voiceGender = 'male';
-    } else if (/(female|woman)/.test(lowerMsg)) {
-      
-      settings.voiceGender = 'female';
     }
     
     if (/high contrast/.test(lowerMsg)) {
@@ -583,7 +379,7 @@ What would you like to improve?`;
       <Button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
-        title={language === 'he' ? 'עוזר חכם' : 'Smart Assistant'}
+        title="AI Assistant"
       >
         <MessageCircle className="h-6 w-6" />
       </Button>
@@ -595,7 +391,7 @@ What would you like to improve?`;
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          {language === 'he' ? 'עוזר לוח חכם' : 'Smart Board Assistant'}
+          AI Board Assistant
         </CardTitle>
         <Button
           variant="ghost"
@@ -644,7 +440,7 @@ What would you like to improve?`;
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder={language === 'he' ? 'ספר לי איך להתאים את הלוח שלך...' : 'Tell me how to customize your board...'}
+            placeholder="Tell me how to customize your board..."
             className="flex-1"
             disabled={isProcessing}
           />

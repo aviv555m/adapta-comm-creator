@@ -16,18 +16,6 @@ export interface Translations {
   category: string;
   generatedFromQuiz: string;
   tilesAvailable: string;
-  backToCategories: string;
-  welcomeMessage: string;
-  speakingNow: string;
-  eyeTrackingStopped: string;
-  eyeTrackingReady: string;
-  calibrationCompleted: string;
-  noTileSelected: string;
-  tapTileFirst: string;
-  returningToCategories: string;
-  echoesBoard: string;
-  echoesBoard2: string;
-  layout: string;
   
   // Board Data
   boardData: {
@@ -198,17 +186,6 @@ export const translations = {
     category: 'Category:',
     generatedFromQuiz: 'Generated from your quiz responses',
     tilesAvailable: 'tiles available',
-    backToCategories: 'Back to Categories',
-    welcomeMessage: 'Welcome! Please answer the questions to set up your communication board',
-    speakingNow: 'Speaking now',
-    eyeTrackingStopped: 'Eye tracking stopped',
-    eyeTrackingReady: 'Eye tracking ready!',
-    calibrationCompleted: 'Calibration completed successfully. The red dot shows where you\'re looking.',
-    noTileSelected: 'No tile selected',
-    tapTileFirst: 'Tap a tile first, then press Ready.',
-    returningToCategories: 'Returning to main categories',
-    echoesBoard: 'Echoes Board',
-    layout: 'Layout',
     
     boardData: {
       'I need help': 'I need help',
@@ -351,18 +328,6 @@ export const translations = {
     category: 'קטגוריה:',
     generatedFromQuiz: 'נוצר מתשובות השאלון שלך',
     tilesAvailable: 'אריחים זמינים',
-    backToCategories: 'חזור לקטגוריות',
-    welcomeMessage: 'ברוכים הבאים! אנא ענו על השאלות כדי להגדיר את לוח התקשורת שלכם',
-    speakingNow: 'מדבר עכשיו',
-    eyeTrackingStopped: 'מעקב עיניים הופסק',
-    eyeTrackingReady: 'מעקב עיניים מוכן!',
-    calibrationCompleted: 'הכיול הושלם בהצלחה. הנקודה האדומה מראה לאן אתם מסתכלים.',
-    noTileSelected: 'לא נבחרה משבצת',
-    tapTileFirst: 'הקש על משבצת קודם, ואז לחץ מוכן.',
-    returningToCategories: 'חוזר לקטגוריות הראשיות',
-    echoesBoard: 'לוח הדים',
-    echoesBoard2: 'לוח אקוס',
-    layout: 'פריסה',
     
     boardData: {
       'I need help': 'אני צריך עזרה',

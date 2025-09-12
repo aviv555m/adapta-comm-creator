@@ -1,7 +1,4 @@
-/* Import Hebrew fonts */
-@import '@fontsource/assistant';
-@import '@fontsource/alef';
-
+/* Google Fonts loaded via HTML preload for better performance */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -121,27 +118,6 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  /* Hebrew RTL support */
-  [dir="rtl"] {
-    font-family: 'Assistant', 'Alef', 'Arial', sans-serif;
-  }
-
-  [dir="rtl"] .app-container {
-    direction: rtl;
-  }
-
-  [dir="rtl"] .flex {
-    flex-direction: row-reverse;
-  }
-
-  [dir="rtl"] .text-left {
-    text-align: right;
-  }
-
-  [dir="rtl"] .text-right {
-    text-align: left;
   }
   
   .app-container {

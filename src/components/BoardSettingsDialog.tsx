@@ -12,7 +12,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 export interface BoardSettings {
   voiceRate?: number;
   voicePitch?: number;
-  voiceGender?: 'male' | 'female' | 'neutral';
   tileSize?: number; // 1-10 scale
   gridColsMobile?: number;
   gridColsDesktop?: number;
